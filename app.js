@@ -165,8 +165,8 @@
     box.scrollTop = box.scrollHeight;
   }
   function removeTyping() {
-    var t = $('typing-msg');
-    if (t) t.remove();
+    // 移除所有打字指示（避免多轮对话残留）
+    document.querySelectorAll('#typing-msg').forEach(function (el) { el.remove(); });
   }
 
   /* ---- 本地知识库兜底回答 ---- */
@@ -330,11 +330,11 @@
         return '[文献] ' + it.title + '（' + (it.source || '') + ', ' + (it.year || '') + '）摘要：' + (it.abstract || '').slice(0, 300) + '【来源】' + (it.source || '开放获取文献');
       }).join('\n\n');
     }
-    var litRefHtml = litRefHtml(litHits);
+    var litRefsHtml = litRefHtml(litHits);
 
     var finalize = function (finalHtml, sources) {
       removeTyping();
-      var bubble = addMsg('ai', finalHtml + litRefHtml);
+      var bubble = addMsg('ai', finalHtml + litRefsHtml);
       chatHistory.push({ role: 'assistant', content: '（回答见上）' });
       if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
       // 滚动到底
@@ -354,25 +354,25 @@
     var acc = '';
     var aiMsg = null;
     var started = false;
+    var bubbleEl = null; // 当前消息的气泡元素（避免多轮对话 id 冲突）
     callLLM(q, context,
       function (delta) {
         if (!started) {
           removeTyping();
           var div = document.createElement('div');
           div.className = 'msg ai';
-          div.innerHTML = '<div class="avatar">Σ</div><div class="bubble" id="stream-bubble"></div>';
+          div.innerHTML = '<div class="avatar">Σ</div><div class="bubble"></div>';
           $('chat-msgs').appendChild(div);
           aiMsg = div;
+          bubbleEl = div.querySelector('.bubble');
           started = true;
         }
         acc += delta;
-        var b = $('stream-bubble');
-        if (b) b.innerHTML = mdInline(acc) + '<span class="typing-ind" style="margin-left:6px"><i></i><i></i><i></i></span>';
+        if (bubbleEl) bubbleEl.innerHTML = mdInline(acc) + '<span class="typing-ind" style="margin-left:6px"><i></i><i></i><i></i></span>';
         var box = $('chat-msgs'); box.scrollTop = box.scrollHeight;
       },
       function (full, sources) {
-        var b = $('stream-bubble');
-        if (b) {
+        if (bubbleEl) {
           var srcHtml = '';
           if (sources && sources.length) {
             srcHtml = '<div class="src-ref">📎 <b>引用来源：</b>' + sources.map(function (s) {
@@ -383,7 +383,7 @@
               return '<span class="src-chip">' + esc(h.source) + '</span>';
             }).join('') + '</div>';
           }
-          b.innerHTML = mdInline(full || acc) + srcHtml;
+          bubbleEl.innerHTML = mdInline(full || acc) + srcHtml;
         }
         var box = $('chat-msgs'); box.scrollTop = box.scrollHeight;
       },
