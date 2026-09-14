@@ -198,7 +198,7 @@
         return '<span class="src-chip">' + esc(r.title) + '</span>';
       }).join('') + '<br><span class="hint">点击上方问题可继续追问，或直接输入新问题。</span></div><br>';
     }
-    html += '<div class="src-ref">📎 以上内容来自华东师大统计学院课程讲义、高等教育出版社权威教材及开放教材（OpenIntro / NIST），回答可溯源。<br>💡 配置大模型 API Key 后可获得更深入的推导讲解与个性化答疑。</div>';
+    html += '<div class="src-ref">📎 以上内容来自高等教育出版社权威教材、维基百科及开放教材（OpenIntro / NIST）等可溯源来源。<br>💡 配置大模型 API Key 后可获得更深入的推导讲解与个性化答疑。</div>';
     return html;
   }
 
