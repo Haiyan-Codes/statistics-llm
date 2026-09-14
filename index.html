@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数智统计 · 统计学学科大模型</title>
+<meta name="description" content="华东师范大学 × 高等教育出版社 · 统计学学科大模型教学平台：知识问答、数据分析教学智能体、多模态可视化">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E3A5F'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%23C9B037' font-family='Georgia'%3EΣ%3C/text%3E%3C/svg%3E">
+<style>
+/* ==========================================================
+   数智统计 · 统计学学科大模型 — 学术浅色主题
+   主色 #1E3A5F 深蓝 / 强调 #C9B037 金 / 次色 #3A6B9E
+   ========================================================== */
+:root{
+  --bg:#F5F7FA;            /* 页面底色 */
+  --bg-soft:#EEF2F7;       /* 次浅底 */
+  --card:#FFFFFF;          /* 卡片 */
+  --ink:#1E3A5F;           /* 深蓝主文字 */
+  --ink2:#44566C;          /* 次文字 */
+  --muted:#7A8AA0;         /* 弱文字 */
+  --line:#D8DEE6;          /* 边框 */
+  --primary:#1E3A5F;       /* 主色 */
+  --primary-2:#3A6B9E;     /* 次级蓝 */
+  --accent:#C9B037;        /* 金色 */
+  --accent-soft:#F6F0DC;   /* 金色浅底 */
+  --ok:#10B981; --warn:#F59E0B; --danger:#EF4444;
+  --radius:12px;
+  --radius-lg:18px;
+  --shadow:0 2px 12px rgba(30,58,95,.06), 0 8px 28px rgba(30,58,95,.08);
+  --shadow-sm:0 1px 6px rgba(30,58,95,.07);
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:"SF Mono",Consolas,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--ink);
+  font-size:15px;line-height:1.65;min-height:100vh;
+}
+a{color:var(--primary-2);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---------- 顶部导航 ---------- */
+.nav-wrap{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{
+  max-width:1180px;margin:0 auto;padding:0 20px;
+  display:flex;align-items:center;gap:24px;height:60px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--primary);cursor:pointer;user-select:none}
+.brand-badge{
+  width:34px;height:34px;border-radius:9px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent);font-family:Georgia,serif;font-size:19px;font-weight:700;
+  box-shadow:inset 0 0 0 2px rgba(201,176,55,.35);
+}
+.brand small{display:block;font-size:10px;font-weight:400;color:var(--muted);letter-spacing:1px;line-height:1.2}
+.nav-tabs{display:flex;gap:4px;margin-left:auto}
+.nav-tabs button{
+  border:none;background:transparent;color:var(--ink2);font-size:14px;
+  padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;transition:.18s;
+}
+.nav-tabs button:hover{background:var(--bg-soft);color:var(--primary)}
+.nav-tabs button.active{background:var(--primary);color:#fff;font-weight:600}
+
+/* ---------- 主容器与页面切换 ---------- */
+main{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.page{display:none;animation:fadeIn .28s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- 通用组件 ---------- */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);padding:20px;margin-bottom:18px;
+}
+.card h3{font-size:16px;color:var(--primary);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card h4{font-size:14px;color:var(--ink2);margin:14px 0 8px}
+.section-title{font-size:22px;font-weight:700;color:var(--primary);margin:10px 0 6px}
+.section-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+.gold-bar{width:52px;height:3px;background:var(--accent);border-radius:2px;margin:8px 0 18px}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;border:none;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:600;border-radius:9px;
+  padding:9px 18px;transition:.18s;line-height:1.4;
+}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#274d7d;transform:translateY(-1px)}
+.btn-gold{background:var(--accent);color:#3a2f00}
+.btn-gold:hover{filter:brightness(1.06)}
+.btn-ghost{background:transparent;color:var(--primary-2);border:1px solid var(--primary-2)}
+.btn-ghost:hover{background:var(--bg-soft)}
+.btn-soft{background:var(--bg-soft);color:var(--primary)}
+.btn-soft:hover{background:#e2e9f2}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+.btn-sm{padding:6px 12px;font-size:13px}
+.tag{
+  display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;
+  background:var(--bg-soft);color:var(--primary-2);margin-right:6px;margin-bottom:4px;
+}
+.tag-gold{background:var(--accent-soft);color:#8a6d00}
+.hint{font-size:12px;color:var(--muted)}
+.badge-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+
+/* ---------- 首页 Hero ---------- */
+.hero{
+  background:linear-gradient(135deg,#1E3A5F 0%,#2d5484 55%,#3A6B9E 100%);
+  border-radius:var(--radius-lg);padding:46px 44px;color:#fff;position:relative;overflow:hidden;
+  box-shadow:var(--shadow);margin-bottom:22px;
+}
+.hero::after{
+  content:"Σ f(x)dx";position:absolute;right:26px;bottom:-26px;
+  font-family:Georgia,serif;font-size:120px;opacity:.09;font-style:italic;letter-spacing:4px;
+}
+.hero-kicker{
+  display:inline-block;font-size:12px;letter-spacing:2px;padding:4px 12px;
+  border:1px solid rgba(201,176,55,.65);color:var(--accent);border-radius:20px;margin-bottom:14px;
+}
+.hero h1{font-size:32px;font-weight:800;letter-spacing:1px;margin-bottom:8px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{max-width:640px;color:rgba(255,255,255,.85);font-size:14.5px;margin-bottom:16px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero .btn-gold{background:var(--accent);color:#2b2400}
+.hero .btn-ghost-w{border:1px solid rgba(255,255,255,.55);color:#fff;background:transparent}
+.hero .btn-ghost-w:hover{background:rgba(255,255,255,.12)}
+.hero-metrics{display:flex;gap:34px;margin-top:26px;flex-wrap:wrap}
+.hero-metrics b{font-size:24px;display:block;color:var(--accent);font-family:var(--mono)}
+.hero-metrics span{font-size:12px;color:rgba(255,255,255,.7)}
+
+/* 三大能力卡片 */
+.cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:8px 0 24px}
+.cap-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);
+  padding:24px 22px;cursor:pointer;transition:.22s;position:relative;overflow:hidden;
+}
+.cap-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#b9c6d6}
+.cap-num{
+  position:absolute;top:14px;right:16px;font-family:Georgia,serif;font-size:44px;font-weight:700;
+  color:var(--bg-soft);
+}
+.cap-ico{
+  width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:14px;
+}
+.cap-card h3{font-size:17px;margin-bottom:8px;color:var(--primary)}
+.cap-card p{font-size:13.5px;color:var(--ink2);margin-bottom:10px;line-height:1.7}
+.cap-card .cap-go{font-size:13px;color:var(--accent);font-weight:600}
+.cap-ico.c1{background:#E8EEF7;color:var(--primary)}
+.cap-ico.c2{background:var(--accent-soft);color:#8a6d00}
+.cap-ico.c3{background:#E9F6F1;color:#0b8a5f}
+
+/* 课程列表 */
+.course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.course-item{
+  background:var(--bg-soft);border-radius:10px;padding:12px 14px;font-size:13.5px;
+  display:flex;align-items:center;gap:8px;color:var(--ink2);
+}
+.course-item b{color:var(--primary);font-family:var(--mono);font-size:12px}
+
+/* ---------- 聊天 ---------- */
+.chat-layout{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+.chat-side .card{padding:16px}
+.chat-side label{font-size:12px;color:var(--muted);display:block;margin:10px 0 4px}
+.chat-side input,.chat-side select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  font-family:inherit;font-size:13px;background:#fff;color:var(--ink);outline:none;
+}
+.chat-side input:focus,.chat-side select:focus{border-color:var(--primary-2)}
+.chat-box{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);
+  display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:520px;overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.chat-head{
+  padding:14px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;background:#fff;
+}
+.chat-head b{color:var(--primary);font-size:15px}
+.chat-status{font-size:11px;color:var(--muted);margin-left:auto}
+.chat-status .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot.ok{background:var(--ok)}.dot.off{background:var(--muted)}
+.chat-msgs{flex:1;overflow-y:auto;padding:18px;background:var(--bg-soft)}
+.msg{display:flex;margin-bottom:16px;gap:10px}
+.msg .avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#fff;
+}
+.msg.user{flex-direction:row-reverse}
+.msg.user .avatar{background:var(--primary)}
+.msg.ai .avatar{background:var(--accent)}
+.bubble{
+  max-width:78%;padding:11px 15px;border-radius:13px;font-size:14px;line-height:1.75;
+  white-space:pre-wrap;word-break:break-word;
+}
+.msg.user .bubble{background:var(--primary);color:#fff;border-top-right-radius:4px}
+.msg.ai .bubble{background:#fff;border:1px solid var(--line);border-top-left-radius:4px;box-shadow:var(--shadow-sm)}
+.bubble .src-ref{
+  margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);
+  font-size:12px;color:var(--muted);
+}
+.bubble .src-ref b{color:var(--primary-2);font-weight:600}
+.src-chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:12px;background:var(--accent-soft);color:#8a6d00;margin-right:5px}
+.chat-inputbar{
+  padding:12px 14px;border-top:1px solid var(--line);background:#fff;
+  display:flex;gap:10px;align-items:flex-end;
+}
+.chat-inputbar textarea{
+  flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:14px;resize:none;outline:none;min-height:44px;max-height:130px;line-height:1.5;
+}
+.chat-inputbar textarea:focus{border-color:var(--primary-2)}
+.sugg-row{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px 0;background:#fff}
+.sugg-chip{
+  font-size:12.5px;padding:5px 12px;border-radius:16px;border:1px solid var(--line);
+  background:var(--bg-soft);color:var(--primary-2);cursor:pointer;transition:.15s;
+}
+.sugg-chip:hover{background:var(--accent-soft);border-color:var(--accent)}
+.typing-ind{display:inline-flex;gap:4px;padding:4px 2px}
+.typing-ind i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1.2s infinite}
+.typing-ind i:nth-child(2){animation-delay:.2s}.typing-ind i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* ---------- 数据分析 ---------- */
+.upload-zone{
+  border:2px dashed #b9c6d6;border-radius:var(--radius-lg);background:var(--bg-soft);
+  padding:38px 24px;text-align:center;cursor:pointer;transition:.2s;color:var(--ink2);
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:#e9eef6}
+.upload-zone .big{font-size:38px;margin-bottom:8px}
+.upload-zone b{color:var(--primary)}
+.examples-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.ex-chip{
+  font-size:12.5px;padding:6px 14px;border-radius:18px;background:#fff;border:1px solid var(--line);
+  cursor:pointer;transition:.15s;color:var(--primary-2);
+}
+.ex-chip:hover{border-color:var(--accent);background:var(--accent-soft);color:#8a6d00}
+.data-tabs{display:flex;gap:6px;margin-bottom:12px}
+.data-tabs button{
+  border:1px solid var(--line);background:#fff;color:var(--ink2);padding:6px 14px;
+  border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;
+}
+.data-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.table-scroll{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:10px}
+table.grid{border-collapse:collapse;width:100%;font-size:12.5px;background:#fff}
+table.grid th,table.grid td{
+  border:1px solid var(--line);padding:6px 9px;text-align:right;white-space:nowrap;
+}
+table.grid th{background:var(--bg-soft);color:var(--primary);font-weight:600;position:sticky;top:0;z-index:2}
+table.grid td.cat{color:var(--primary-2)}
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.stat-card{background:var(--bg-soft);border-radius:10px;padding:12px 14px}
+.stat-card b{font-size:19px;color:var(--primary);display:block;font-family:var(--mono)}
+.stat-card span{font-size:11.5px;color:var(--muted)}
+.var-chip{
+  display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 11px;
+  border-radius:8px;margin:0 6px 6px 0;background:#fff;border:1px solid var(--line);
+}
+.var-chip.num{border-left:3px solid var(--primary)}
+.var-chip.cat{border-left:3px solid var(--accent)}
+.warn-box{
+  background:#FEF7E8;border:1px solid #F2DFAE;border-radius:10px;padding:10px 14px;
+  font-size:13px;color:#7a5a00;margin:8px 0;
+}
+.report-box{
+  background:#FBFCFE;border:1px solid var(--line);border-radius:12px;padding:16px;
+  font-size:13px;max-height:460px;overflow:auto;font-family:var(--mono);color:var(--ink2);
+}
+.report-box h1{font-size:15px;color:var(--primary);margin:10px 0 4px}
+.report-box h2{font-size:13.5px;color:var(--primary-2);margin:12px 0 4px}
+.report-box table{border-collapse:collapse;margin:6px 0;font-size:12px}
+.report-box td,.report-box th{border:1px solid var(--line);padding:3px 8px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.chart-card canvas{max-width:100%;display:block;margin:0 auto}
+.chart-card .chart-cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:6px}
+
+/* ---------- 多模态教学 ---------- */
+.viz-layout{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start}
+.viz-menu{display:flex;flex-direction:column;gap:6px}
+.viz-menu button{
+  text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:11px 13px;cursor:pointer;font-family:inherit;font-size:13.5px;color:var(--ink2);
+  transition:.15s;display:flex;align-items:center;gap:8px;
+}
+.viz-menu button .vi{font-size:16px}
+.viz-menu button:hover{border-color:var(--primary-2)}
+.viz-menu button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.viz-stage .card{padding:22px}
+.viz-stage canvas{display:block;margin:0 auto;max-width:100%;border-radius:10px;background:#fff}
+.param-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.param-row label{font-size:13px;color:var(--ink2);min-width:130px}
+.param-row input[type=range]{flex:1;min-width:160px;accent-color:var(--primary)}
+.param-row output{font-family:var(--mono);font-size:13px;color:var(--primary);min-width:46px;text-align:right}
+.viz-notes{font-size:13px;color:var(--ink2);background:var(--bg-soft);border-radius:10px;padding:12px 14px;margin-top:14px;line-height:1.8}
+.viz-notes b{color:var(--primary)}
+.viz-run{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+
+/* ---------- 关于页 ---------- */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.arch-box{
+  background:var(--bg-soft);border-radius:12px;padding:16px;font-family:var(--mono);
+  font-size:12px;line-height:1.9;color:var(--ink2);white-space:pre;overflow-x:auto;
+}
+.frontier-item{border-left:3px solid var(--accent);padding:6px 0 6px 14px;margin-bottom:12px}
+.frontier-item b{color:var(--primary);font-size:14px}
+.frontier-item p{font-size:13px;color:var(--ink2);margin-top:4px}
+.frontier-item .src{font-size:11px;color:var(--muted);margin-top:3px}
+.footer{
+  max-width:1180px;margin:0 auto;padding:18px 20px 34px;border-top:1px solid var(--line);
+  color:var(--muted);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+
+/* ---------- 响应式 ---------- */
+@media(max-width:960px){
+  .cap-grid{grid-template-columns:1fr}
+  .chat-layout,.viz-layout{grid-template-columns:1fr}
+  .stat-cards{grid-template-columns:repeat(2,1fr)}
+  .chart-grid,.about-grid{grid-template-columns:1fr}
+  .course-grid{grid-template-columns:1fr}
+  .hero{padding:32px 26px}
+  .hero h1{font-size:25px}
+  .nav-tabs button{padding:8px 9px;font-size:13px}
+  .brand small{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 导航 ==================== -->
+<header class="nav-wrap">
+  <div class="nav-inner">
+    <div class="brand" onclick="go('home')">
+      <div class="brand-badge">Σ</div>
+      <div>数智统计<small>STATISTICS LLM · ECNU×HEP</small></div>
+    </div>
+    <nav class="nav-tabs">
+      <button data-p="home" class="active" onclick="go('home')">首页</button>
+      <button data-p="chat" onclick="go('chat')">知识问答</button>
+      <button data-p="data" onclick="go('data')">数据分析Agent</button>
+      <button data-p="viz" onclick="go('viz')">多模态教学</button>
+      <button data-p="about" onclick="go('about')">关于</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ==================== 首页 ==================== -->
+<section id="page-home" class="page active">
+  <div class="hero">
+    <span class="hero-kicker">华东师范大学 × 高等教育出版社 · 教育部学科大模型建设项目</span>
+    <h1>统计学学科大模型 <em>「数智统计」</em></h1>
+    <p>面向统计学、数据科学专业的 AI+ 教学平台：以统计学科专属知识库为底座，提供<b style="color:#fff">可溯源的专业知识问答</b>、<b style="color:#fff">智能数据分析教学 Agent</b> 与 <b style="color:#fff">多模态动态可视化</b>三大核心能力，服务课堂答疑、实验实训与作业评阅。</p>
+    <div class="hero-actions">
+      <button class="btn btn-gold" onclick="go('chat')">💬 开始提问</button>
+      <button class="btn btn-ghost-w" onclick="go('data')">📊 分析数据</button>
+      <button class="btn btn-ghost-w" onclick="go('viz')">🎯 可视化实验室</button>
+    </div>
+    <div class="hero-metrics">
+      <div><b>6</b><span>核心课程覆盖</span></div>
+      <div><b>2</b><span>国家级一流课程</span></div>
+      <div><b>100+</b><span>并发用户支持</span></div>
+      <div><b>100%</b><span>回答可溯源</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">三大核心能力</div>
+  <div class="gold-bar"></div>
+  <div class="cap-grid">
+    <div class="cap-card" onclick="go('chat')">
+      <div class="cap-num">01</div>
+      <div class="cap-ico c1">💬</div>
+      <h3>统计学科知识问答</h3>
+      <p>围绕概率论与数理统计、回归分析、试验设计、多元统计分析、时间序列分析、抽样调查六大核心课程，提供<b>准确、专业、可溯源</b>的智能答疑与知识讲解，擅长易混淆概念辨析与证明题逐步推理引导。</p>
+      <div class="cap-go">进入问答 →</div>
+    </div>
+    <div class="cap-card" onclick="go('data')">
+      <div class="cap-num">02</div>
+      <div class="cap-ico c2">📊</div>
+      <h3>数据分析教学智能体</h3>
+      <p>学生上传数据（CSV/Excel）后自动完成<b>数据清洗、探索性分析、统计建模、结果解释与可视化呈现</b>，自动选择合适统计方法并解释理由，辅助教师开展案例教学、实验实训与作业评阅。</p>
+      <div class="cap-go">进入分析 →</div>
+    </div>
+    <div class="cap-card" onclick="go('viz')">
+      <div class="cap-num">03</div>
+      <div class="cap-ico c3">🎯</div>
+      <h3>多模态教学应用</h3>
+      <p>统计概念<b>动态可视化</b>与虚拟仿真实验：中心极限定理、大数定律、置信区间、检验功效等抽象概念，可通过调节参数直观观察统计规律变化，将"理解"从被动接受变为主动探索。</p>
+      <div class="cap-go">进入实验室 →</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📚 覆盖课程与知识版图</h3>
+    <div class="course-grid">
+      <div class="course-item"><b>01</b> 概率论与数理统计</div>
+      <div class="course-item"><b>02</b> 回归分析</div>
+      <div class="course-item"><b>03</b> 试验设计</div>
+      <div class="course-item"><b>04</b> 多元统计分析</div>
+      <div class="course-item"><b>05</b> 时间序列分析</div>
+      <div class="course-item"><b>06</b> 抽样调查</div>
+    </div>
+    <p class="hint" style="margin-top:12px">知识问答的每个回答都附「来源引用」——来自华东师大统计学院课程讲义、高等教育出版社权威教材及公开学术论文，保障专业性与可溯源性。</p>
+  </div>
+
+  <div class="card">
+    <h3>🎓 建设基础</h3>
+    <p style="font-size:13.5px;color:var(--ink2);line-height:2">
+      <span class="tag tag-gold">国家"双一流"建设学科</span>
+      <span class="tag tag-gold">统计学专业·首批国家级一流本科专业建设点（2019）</span>
+      <span class="tag tag-gold">《概率论》《试验设计》国家级一流本科课程</span>
+      <span class="tag tag-gold">统计与数据科学前沿理论及应用教育部重点实验室</span>
+      <span class="tag">依托国产通用大模型增量训练</span>
+      <span class="tag">高等教育出版社权威教材语料授权</span>
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 知识问答 ==================== -->
+<section id="page-chat" class="page">
+  <div class="section-title">统计学科知识问答</div>
+  <div class="gold-bar"></div>
+  <div class="chat-layout">
+    <div class="chat-side">
+      <div class="card">
+        <h3>⚙️ 模型配置</h3>
+        <label>服务提供商</label>
+        <select id="cfg-provider">
+          <option value="deepseek">DeepSeek（推荐 · 国产）</option>
+          <option value="siliconflow">SiliconFlow（Qwen 兜底）</option>
+          <option value="openai">OpenAI 兼容接口（自定义）</option>
+          <option value="local">本地知识库（离线兜底）</option>
+        </select>
+        <label>API Key</label>
+        <input id="cfg-key" type="password" placeholder="sk-..." autocomplete="off">
+        <label>模型名称</label>
+        <input id="cfg-model" type="text" placeholder="deepseek-chat">
+        <label>服务地址（可留空用默认）</label>
+        <input id="cfg-base" type="text" placeholder="https://api.deepseek.com">
+        <label>后端网关地址（Worker）</label>
+        <input id="cfg-worker" type="text" placeholder="https://xxx.workers.dev 或 http://localhost:8787">
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-soft btn-sm" onclick="saveChatConfig()">保存配置</button>
+          <button class="btn btn-ghost btn-sm" onclick="testConn()">测试连接</button>
+        </div>
+        <p class="hint" style="margin-top:10px">未配置 Key 或选择「本地知识库」时，将使用内置学科知识库离线回答（仍可溯源）。Key 仅保存在本机浏览器。</p>
+      </div>
+      <div class="card">
+        <h3>📖 知识版图</h3>
+        <p class="hint">支持：概念辨析 · 公式推导引导 · 方法选择 · 学科前沿</p>
+        <div style="margin-top:8px" id="kb-courses"></div>
+      </div>
+    </div>
+    <div class="chat-box">
+      <div class="chat-head">
+        <b>💬 数智统计 · 答疑助手</b>
+        <span class="chat-status" id="chat-status"><span class="dot off"></span><span id="chat-status-txt">本地知识库模式</span></span>
+      </div>
+      <div class="sugg-row" id="sugg-row"></div>
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="chat-inputbar">
+        <textarea id="chat-input" placeholder="输入你的统计问题，例如：中心极限定理为什么重要？按 Enter 发送，Shift+Enter 换行" rows="1"></textarea>
+        <button class="btn btn-primary" id="chat-send" onclick="sendChat()">发送</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 数据分析 Agent ==================== -->
+<section id="page-data" class="page">
+  <div class="section-title">数据分析教学智能体</div>
+  <div class="gold-bar"></div>
+
+  <div class="card">
+    <h3>📤 上传数据</h3>
+    <div class="upload-zone" id="upload-zone">
+      <div class="big">📂</div>
+      <div>点击选择或拖拽 <b>CSV / TSV</b> 文件到此处<br><span class="hint">支持逗号/制表符/分号分隔 · 自动识别表头与数据类型 · 支持 UTF-8/GBK 编码</span></div>
+      <input type="file" id="file-input" accept=".csv,.tsv,.txt" style="display:none">
+    </div>
+    <div class="examples-row">
+      <span class="hint" style="padding-top:7px">没有数据？试试示例：</span>
+      <button class="ex-chip" onclick="loadExample('class_scores')">📊 班级成绩与学习投入</button>
+      <button class="ex-chip" onclick="loadExample('teaching_methods')">🎓 两种教学方法对比</button>
+      <button class="ex-chip" onclick="loadExample('pre_post')">🧪 干预前后测（配对）</button>
+      <button class="ex-chip" onclick="loadExample('survey')">🌙 睡眠与情绪问卷</button>
+    </div>
+  </div>
+
+  <div id="data-result" style="display:none">
+    <div class="data-tabs">
+      <button class="active" data-tab="overview" onclick="switchDataTab('overview')">数据概览</button>
+      <button data-tab="quality" onclick="switchDataTab('quality')">数据质量</button>
+      <button data-tab="describe" onclick="switchDataTab('describe')">描述统计</button>
+      <button data-tab="inference" onclick="switchDataTab('inference')">推断检验</button>
+      <button data-tab="charts" onclick="switchDataTab('charts')">可视化</button>
+      <button data-tab="report" onclick="switchDataTab('report')">分析报告</button>
+      <button class="btn btn-gold btn-sm" style="margin-left:auto" onclick="runAutoAnalyze()">▶ 一键全量分析</button>
+    </div>
+
+    <div id="tab-overview" class="tab-pane">
+      <div class="stat-cards" id="stat-cards"></div>
+      <div class="card">
+        <h3>🔎 变量结构</h3>
+        <div id="var-chips"></div>
+      </div>
+      <div class="card">
+        <h3>📋 数据预览</h3>
+        <div class="table-scroll" id="data-preview"></div>
+      </div>
+    </div>
+
+    <div id="tab-quality" class="tab-pane" style="display:none">
+      <div class="card">
+        <h3>🛡️ 数据质量报告</h3>
+        <div id="quality-report"></div>
+      </div>
+    </div>
+
+    <div id="tab-describe" class="tab-pane" style="display:none">
+      <div class="card">
+        <h3>📐 描述统计表</h3>
+        <div class="table-scroll" id="describe-table"></div>
+      </div>
+    </div>
+
+    <div id="tab-inference" class="tab-pane" style="display:none">
+      <div id="inference-result"></div>
+    </div>
+
+    <div id="tab-charts" class="tab-pane" style="display:none">
+      <div class="chart-grid" id="charts-area"></div>
+    </div>
+
+    <div id="tab-report" class="tab-pane" style="display:none">
+      <div class="card">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <h3 style="margin:0">📝 自动生成的分析报告</h3>
+          <button class="btn btn-soft btn-sm" onclick="copyReport()">复制报告</button>
+          <button class="btn btn-soft btn-sm" onclick="downloadReport()">下载 .md</button>
+        </div>
+        <div class="report-box" id="report-box"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 多模态教学 ==================== -->
+<section id="page-viz" class="page">
+  <div class="section-title">多模态教学 · 统计概念动态可视化</div>
+  <div class="gold-bar"></div>
+  <div class="viz-layout">
+    <div class="viz-menu" id="viz-menu">
+      <button class="active" data-viz="clt"><span class="vi">🎲</span>中心极限定理</button>
+      <button data-viz="lln"><span class="vi">📉</span>大数定律</button>
+      <button data-viz="ci"><span class="vi">🎯</span>置信区间模拟</button>
+      <button data-viz="power"><span class="vi">⚡</span>检验功效</button>
+      <button data-viz="normal"><span class="vi">🔔</span>正态分布曲线</button>
+      <button data-viz="reg"><span class="vi">📈</span>回归拟合演示</button>
+    </div>
+    <div class="viz-stage">
+      <div class="card">
+        <h3 id="viz-title">中心极限定理</h3>
+        <div class="viz-run" id="viz-controls"></div>
+        <canvas id="viz-canvas" width="860" height="430"></canvas>
+        <div class="viz-notes" id="viz-notes"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 关于 ==================== -->
+<section id="page-about" class="page">
+  <div class="section-title">关于「数智统计」</div>
+  <div class="gold-bar"></div>
+  <div class="card">
+    <h3>🏛️ 项目背景</h3>
+    <p style="font-size:13.5px;color:var(--ink2);line-height:1.9">
+      为深入贯彻习近平总书记关于"积极推动人工智能和教育深度融合，促进教育变革创新"的重要指示精神，教育部高等教育司组织开展高等教育领域学科大模型征集建设工作（教高司函〔2026〕9号）。
+      华东师范大学联合高等教育出版社，依托统计学学科深厚积累与权威教材资源，申报建设<b style="color:var(--primary)">统计学学科大模型「数智统计」</b>。
+      项目覆盖统计学类 2 个专业（统计学、数据科学）主干课程，构建权威高质量数据集，依托国产通用大模型增量训练，
+      形成"AI+统计学"可复制推广的教学新模式，最终上线国家高等教育智慧教育平台。
+    </p>
+  </div>
+  <div class="about-grid">
+    <div class="card">
+      <h3>🏗️ 技术架构</h3>
+      <div class="arch-box">┌─────────────────────────────────────────┐
+│  前端 SPA（GitHub Pages / 本地均可运行）  │
+│  index.html + knowledge.js + stats-engine │
+└──────────────┬──────────────────────────┘
+               │  HTTPS + CORS
+      ┌────────▼────────────────┐
+      │ Cloudflare Worker 后端   │
+      │  · LLM 多供应商网关       │
+      │  · 限流 / KV 缓存 / 审计  │
+      └────────┬────────────────┘
+      ┌────────▼────────────────┐
+      │  DeepSeek / Qwen 等      │
+      │  国产通用大模型 API      │
+      └─────────────────────────┘
+统计计算：前端原生 JS 引擎（零依赖）
+知识检索：本地知识库 RAG（可溯源）</div>
+    </div>
+    <div class="card">
+      <h3>📚 知识库来源</h3>
+      <div id="about-sources"></div>
+      <h3>🎯 评测保障</h3>
+      <p style="font-size:13px;color:var(--ink2);line-height:1.9">
+        依照通知要求，通过<b>安全评测、学科通用能力评测、学科基准评测、模型效能评测</b>四维评测方可上线；
+        目标：知识问答准确率 ≥90%、数据分析任务成功率 ≥85%、回答溯源覆盖率 ≥95%、支持 ≥100 并发用户。
+      </p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <h3>🧭 学科前沿 · AI 时代统计学（JASA 2026）</h3>
+    <div id="frontier-list"></div>
+  </div>
+  <div class="card">
+    <h3>📌 演示提示</h3>
+    <p style="font-size:13px;color:var(--ink2);line-height:2">
+      ① 在「知识问答」页可切换本地知识库模式离线体验，配置 DeepSeek API Key 后获得更强的生成式答疑；<br>
+      ② 在「数据分析 Agent」页点击任意示例数据 →「一键全量分析」，体验从数据清洗到检验、回归、图表、报告的全流程；<br>
+      ③ 在「多模态教学」页调节参数观察统计规律动态变化，适合课堂演示与虚拟仿真实验。
+    </p>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <span>统计学学科大模型「数智统计」 · 华东师范大学 × 高等教育出版社 · 教高司函〔2026〕9号</span>
+  <span>本地原型 v1.0 · 用于申报演示与教学验证</span>
+</footer>
+
+<!-- 脚本加载顺序：知识库 → 统计引擎 → 应用逻辑 -->
+<script src="knowledge.js"></script>
+<script src="stats-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
