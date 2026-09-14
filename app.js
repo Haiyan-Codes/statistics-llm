@@ -169,6 +169,10 @@
   }
 
   /* ---- 本地知识库兜底回答 ---- */
+  window.quickAsk = function (q) {
+    $('chat-input').value = q;
+    sendChat();
+  };
   function localAnswer(question) {
     var hits = KB.search(question, 3);
     if (!hits.length) {
@@ -176,10 +180,16 @@
         '建议：① 换个更聚焦的关键词（如"t 检验""置信区间""卡方检验"）；② 尝试下方推荐问题；③ 配置大模型 Key 后获得更开放的生成式答疑。';
     }
     var html = '<b>根据统计学科知识库检索，要点如下：</b><br><br>';
+    // 第一个命中：完整讲解（含生动例子）；其余命中：标题引导追问
     hits.forEach(function (h, i) {
-      html += '<b>『' + mdInline(h.title) + '』</b><br>' + mdInline(h.content) + '<br><br>';
-      html += '<span class="src-chip">来源</span> <b>' + esc(h.source) + '</b><br><br>';
+      if (i === 0) {
+        html += '<b>『' + mdInline(h.title) + '』</b><br>' + mdInline(h.content) + '<br><br>';
+        html += '<span class="src-chip">来源</span> <b>' + esc(h.source) + '</b><br><br>';
+      } else {
+        html += '<span class="src-chip" style="cursor:pointer" onclick="quickAsk(\'' + esc(h.title).replace(/'/g, "\\'") + '\')">➡ ' + esc(h.title) + '</span>';
+      }
     });
+    if (hits.length > 1) html += '<br><span class="hint">点击上方延伸概念可继续追问</span><br><br>';
     // 相关追问建议
     var related = KB.search(question, 8).slice(hits.length, hits.length + 3);
     if (related.length) {
