@@ -65,6 +65,13 @@ a:hover{text-decoration:underline}
 }
 .nav-tabs button:hover{background:var(--bg-soft);color:var(--primary)}
 .nav-tabs button.active{background:var(--primary);color:#fff;font-weight:600}
+.ver-badge{
+  margin-left:10px;flex-shrink:0;font-size:12px;font-weight:700;letter-spacing:.5px;
+  padding:4px 11px;border-radius:20px;color:var(--accent);
+  border:1.5px solid var(--accent);background:rgba(201,176,55,.08);
+  display:flex;align-items:center;gap:5px;cursor:default;user-select:none;
+}
+.ver-badge i{font-style:normal;font-weight:400;font-size:11px;color:var(--muted)}
 
 /* ---------- 主容器与页面切换 ---------- */
 main{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
@@ -375,6 +382,7 @@ table.grid td.cat{color:var(--primary-2)}
   .hero h1{font-size:25px}
   .ai-logo-wrap{width:104px;height:104px;right:10px;top:8px}
   .nav-tabs button{padding:8px 9px;font-size:13px}
+  .ver-badge{display:none}
   .brand small{display:none}
 }
 </style>
@@ -398,6 +406,7 @@ table.grid td.cat{color:var(--primary-2)}
       <button data-p="lesson" onclick="go('lesson')">教案工坊</button>
       <button data-p="about" onclick="go('about')">关于</button>
     </nav>
+    <span class="ver-badge" title="当前版本">V1.0<i>内测</i></span>
   </div>
 </header>
 
