@@ -2036,9 +2036,11 @@
   };
   window.downloadLessonPptx = function () {
     var lesson = window._lastLesson, outline = window._lastOutline;
-    if (!lesson || !window.pptxgen) { alert('PPT 组件未就绪或暂无教案'); return; }
+    var Pptx = window.PptxGenJS || window.pptxgen;
+    if (!lesson) { alert('暂无教案，请先点击「生成教案」'); return; }
+    if (!Pptx) { alert('PPT 组件未就绪，请刷新页面后重试'); return; }
     try {
-      var pptx = new window.pptxgen();
+      var pptx = new Pptx();
       pptx.defineLayout({ name: 'WIDE', width: 13.33, height: 7.5 });
       pptx.layout = 'WIDE';
       var NAVY = '1E3A5F', GOLD = 'C9B037', GRAY = '6B7280', BODY = '44566C';
