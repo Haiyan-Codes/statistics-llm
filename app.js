@@ -1778,7 +1778,8 @@
       return '<span class="tag">' + esc(s) + '</span>';
     }).join('');
     // 前沿观点
-    $('frontier-list').innerHTML = KB.frontier.map(function (f) {
+    var fl = $('frontier-list');
+    if (fl) fl.innerHTML = KB.frontier.map(function (f) {
       return '<div class="frontier-item"><b>' + esc(f.title) + '</b><p>' + mdInline(f.content) + '</p><div class="src">📎 ' + esc(f.source) + '</div></div>';
     }).join('');
     // 知识版图（聊天侧栏）
@@ -1825,6 +1826,8 @@
     renderLibContent(null);
   };
 
+  window.renderLibContent = renderLibContent;
+
   window.libTab = function (key, btn) {
     document.querySelectorAll('#lib-tabs button').forEach(function (b) { b.classList.remove('active'); });
     if (btn) btn.classList.add('active');
@@ -1857,8 +1860,7 @@
     var dirs = key ? DIR_ORDER.filter(function (p) { return p[0] === key; }) : DIR_ORDER;
     var q = ($('lib-search') && $('lib-search').value || '').trim().toLowerCase();
     var sortBy = $('lib-sort') ? $('lib-sort').value : 'default';
-    var shown = 0;
-    dirs.forEach(function (pair) {
+    var shown = 0;    dirs.forEach(function (pair) {
       var dkey = pair[0], cn = pair[1];
       var tbs = RES.textbooks[dkey] || [];
       var lits = RES.literature[dkey] ? RES.literature[dkey].items.slice() : [];
