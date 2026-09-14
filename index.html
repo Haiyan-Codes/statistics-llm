@@ -559,6 +559,10 @@ table.grid td.cat{color:var(--primary-2)}
       <button data-viz="power"><span class="vi">⚡</span>检验功效</button>
       <button data-viz="normal"><span class="vi">🔔</span>正态分布曲线</button>
       <button data-viz="reg"><span class="vi">📈</span>回归拟合演示</button>
+      <button data-viz="tdist"><span class="vi">🧪</span>t 分布 vs 正态</button>
+      <button data-viz="chi2"><span class="vi">📊</span>卡方分布</button>
+      <button data-viz="errors"><span class="vi">⚖️</span>两类错误模拟</button>
+      <button data-viz="pvalue"><span class="vi">🔍</span>P 值动画</button>
     </div>
     <div class="viz-stage">
       <div class="card">
@@ -615,6 +619,20 @@ table.grid td.cat{color:var(--primary-2)}
     </div>
   </div>
   <div class="card" style="margin-top:18px">
+    <h3>📚 开放教材与资料库</h3>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.9">
+      平台知识库持续从以下<b style="color:var(--primary)">开放授权</b>资源扩充（本地已存档至科研资料硬盘，供课程组使用）：
+    </p>
+    <div style="margin-top:8px">
+      <span class="tag tag-gold">OpenIntro Statistics 4th（CC BY-SA）</span>
+      <span class="tag tag-gold">NIST/SEMATECH e-Handbook（公共领域）</span>
+      <span class="tag tag-gold">JASA 2026 学科前沿观点</span>
+      <span class="tag">华东师大统计学院课程讲义</span>
+      <span class="tag">高等教育出版社权威教材</span>
+    </div>
+    <p class="hint" style="margin-top:10px">资源下载：OpenIntro 官方 openintro.org（免费 PDF）；NIST e-Handbook：itl.nist.gov/div898/handbook（公共领域，可自由使用）。全部来源均符合开放授权规范，版权清晰可溯。</p>
+  </div>
+  <div class="card">
     <h3>🧭 学科前沿 · AI 时代统计学（JASA 2026）</h3>
     <div id="frontier-list"></div>
   </div>
@@ -634,8 +652,9 @@ table.grid td.cat{color:var(--primary-2)}
   <span>本地原型 v1.0 · 用于申报演示与教学验证</span>
 </footer>
 
-<!-- 脚本加载顺序：知识库 → 统计引擎 → 应用逻辑 -->
+<!-- 脚本加载顺序：知识库 → 扩展知识库 → 统计引擎 → 应用逻辑 -->
 <script src="knowledge.js"></script>
+<script src="knowledge-extra.js"></script>
 <script src="stats-engine.js"></script>
 <script src="app.js"></script>
 </body>
