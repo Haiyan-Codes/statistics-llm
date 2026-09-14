@@ -56,7 +56,8 @@
       b.classList.toggle('active', b.dataset.p === page);
     });
     window.scrollTo(0, 0);
-    if (page === 'viz') initViz();
+    if (page === 'library') renderLibrary();
+    if (page === 'litsearch') setTimeout(function () { var el = $('lit-q'); if (el) el.focus(); }, 100);
   };
 
   /* ==========================================================
@@ -1714,6 +1715,368 @@
     }
   }
 
+  /* ==========================================================
+   * 四、资源库（教材 + 文献分类展示）
+   * ========================================================== */
+  var RES = window.STAT_RESOURCES || { textbooks: {}, literature: {} };
+  var DIR_ORDER = [
+    ['probability_and_statistics', '概率论与数理统计'],
+    ['regression_analysis', '回归分析'],
+    ['design_of_experiments', '试验设计'],
+    ['multivariate_statistics', '多元统计分析'],
+    ['time_series', '时间序列分析'],
+    ['survey_sampling', '抽样调查']
+  ];
+  var GIT_BASE = 'https://raw.githubusercontent.com/Haiyan-Codes/statistics-llm/main/resources/';
+
+  window.renderLibrary = function () {
+    var tbCount = 0, litCount = 0, oaCount = 0;
+    DIR_ORDER.forEach(function (pair) {
+      var key = pair[0];
+      if (RES.textbooks[key]) tbCount += RES.textbooks[key].length;
+      if (RES.literature[key]) {
+        litCount += RES.literature[key].items.length;
+        RES.literature[key].items.forEach(function (it) { if (it.local_pdf) oaCount++; });
+      }
+    });
+    $('lib-tb-count').textContent = tbCount;
+    $('lib-lit-count').textContent = litCount;
+    $('lib-oa-count').textContent = oaCount;
+    // tabs
+    var tabs = $('lib-tabs');
+    tabs.innerHTML = '<button class="active" onclick="libTab(null,this)">全部</button>' + DIR_ORDER.map(function (p) {
+      return '<button onclick="libTab(\'' + p[0] + '\',this)">' + p[1] + '</button>';
+    }).join('');
+    renderLibContent(null);
+  };
+
+  window.libTab = function (key, btn) {
+    document.querySelectorAll('#lib-tabs button').forEach(function (b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderLibContent(key);
+  };
+
+  function renderLibContent(key) {
+    var html = '';
+    var dirs = key ? DIR_ORDER.filter(function (p) { return p[0] === key; }) : DIR_ORDER;
+    dirs.forEach(function (pair) {
+      var dkey = pair[0], cn = pair[1];
+      var tbs = RES.textbooks[dkey] || [];
+      var lits = RES.literature[dkey] ? RES.literature[dkey].items : [];
+      if (!tbs.length && !lits.length) return;
+      html += '<div class="card"><h3>📖 ' + cn + '（教材 ' + tbs.length + ' 本 · 文献 ' + lits.length + ' 篇）</h3>';
+      if (tbs.length) {
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:14px">';
+        tbs.forEach(function (b) {
+          var url = b.url || (GIT_BASE + 'textbooks/' + dkey + '/' + encodeURIComponent(b.file));
+          html += '<div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg-soft)">' +
+            '<b style="color:var(--primary);font-size:13px">' + esc(b.title) + '</b>' +
+            '<div class="hint" style="margin:6px 0">' + esc(b.source || '') + (b.size ? ' · ' + b.size : '') + '</div>' +
+            '<a class="btn btn-soft btn-sm" href="' + url + '" target="_blank" rel="noopener">⬇ 下载</a></div>';
+        });
+        html += '</div>';
+      }
+      if (lits.length) {
+        html += '<div class="table-scroll" style="max-height:320px"><table class="grid"><thead><tr><th>文献</th><th>作者</th><th>来源/年份</th><th>被引</th><th></th></tr></thead><tbody>';
+        lits.slice(0, 30).forEach(function (it) {
+          var link = it.local_pdf ? (GIT_BASE + 'literature/' + dkey + '/pdf/' + encodeURIComponent(it.local_pdf)) : (it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : ''));
+          html += '<tr><td style="text-align:left"><b>' + esc(it.title || '') + '</b>' +
+            (it.oa ? ' <span class="tag-gold" style="padding:0 6px;font-size:10px">OA</span>' : '') + '<br>' +
+            '<span class="hint">' + esc((it.abstract || '').slice(0, 90)) + '…</span></td>' +
+            '<td class="hint" style="font-size:11px">' + esc((it.authors || []).slice(0, 3).join(', ')) + '</td>' +
+            '<td class="hint" style="font-size:11px">' + esc(it.source || '') + '<br>' + (it.year || '—') + '</td>' +
+            '<td>' + (it.cited || 0) + '</td>' +
+            '<td>' + (link ? '<a href="' + link + '" target="_blank" rel="noopener">↗</a>' : '—') + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+      html += '</div>';
+    });
+    if (!html) html = '<div class="card"><p class="hint">资源数据加载中，请稍后刷新…</p></div>';
+    $('lib-content').innerHTML = html;
+  }
+
+  /* ==========================================================
+   * 五、文献检索
+   * ========================================================== */
+  window.searchLit = async function () {
+    var q = $('lit-q').value.trim();
+    if (!q) return;
+    var box = $('lit-result');
+    box.innerHTML = '<p class="hint">🔍 正在检索 OpenAlex / Crossref / arXiv …</p>';
+    var cfg = getChatConfig();
+    var worker = (cfg.workerUrl || 'https://statllm.mentalhealthresearch.top').replace(/\/+$/, '');
+    try {
+      var resp = await fetch(worker + '/api/search-literature', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+      });
+      var j = await resp.json();
+      if (!j.ok) throw new Error(j.error || '检索失败');
+      var items = j.results || [];
+      if (!items.length) { box.innerHTML = '<p class="hint">未找到相关文献，换个关键词试试～</p>'; return; }
+      var html = '<div class="card"><h3>检索结果：' + esc(q) + '（' + items.length + ' 篇）</h3></div>';
+      items.slice(0, 25).forEach(function (it, i) {
+        var link = it.pdfUrl || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : '');
+        html += '<div class="card" style="padding:14px 16px">' +
+          '<div style="display:flex;gap:8px;align-items:flex-start"><b style="color:var(--primary);flex:1">' + (i + 1) + '. ' + esc(it.title) + '</b>' +
+          (it.oa ? '<span class="tag tag-gold">OA 全文</span>' : '') + '<span class="tag">' + esc(it.api || '') + '</span></div>' +
+          '<div class="hint" style="margin:6px 0">' + esc((it.authors || []).slice(0, 5).join(', ')) + '　·　' + esc(it.source || '') + '　·　' + (it.year || '—') + '　·　被引 ' + (it.cited || 0) + '</div>' +
+          '<div style="font-size:12.5px;color:var(--ink2);line-height:1.7">' + esc((it.abstract || '').slice(0, 280)) + (it.abstract && it.abstract.length > 280 ? '…' : '') + '</div>' +
+          '<div style="margin-top:8px">' + (link ? '<a class="btn btn-soft btn-sm" href="' + link + '" target="_blank" rel="noopener">↗ 查看全文/DOI</a>' : '') +
+          (it.doi ? ' <span class="hint" style="margin-left:8px">DOI: ' + esc(it.doi.replace('https://doi.org/', '')) + '</span>' : '') + '</div></div>';
+      });
+      box.innerHTML = html;
+    } catch (e) {
+      box.innerHTML = '<div class="warn-box">⚠️ 检索失败：' + esc(e.message) + '<br><span class="hint">若网关未部署文献检索接口，请确认 Worker 已更新。</span></div>';
+    }
+  };
+
+  /* ==========================================================
+   * 六、知识蒸馏
+   * ========================================================== */
+  var distillZone = $('distill-zone');
+  if (distillZone) {
+    distillZone.addEventListener('click', function () { $('distill-file').click(); });
+    distillZone.addEventListener('dragover', function (e) { e.preventDefault(); distillZone.classList.add('drag'); });
+    distillZone.addEventListener('dragleave', function () { distillZone.classList.remove('drag'); });
+    distillZone.addEventListener('drop', function (e) {
+      e.preventDefault(); distillZone.classList.remove('drag');
+      var f = e.dataTransfer.files[0];
+      if (f) handleDistillFile(f);
+    });
+    $('distill-file').addEventListener('change', function () {
+      if (this.files[0]) handleDistillFile(this.files[0]);
+    });
+  }
+
+  function handleDistillFile(file) {
+    var ext = file.name.split('.').pop().toLowerCase();
+    $('distill-status').textContent = '正在读取 ' + file.name + ' …';
+    if (ext === 'pdf') {
+      if (!window.pdfjsLib) { $('distill-status').textContent = '⚠️ PDF 解析组件未加载'; return; }
+      var fr = new FileReader();
+      fr.onload = async function () {
+        try {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
+          var pdf = await window.pdfjsLib.getDocument({ data: fr.result }).promise;
+          var text = '';
+          for (var p = 1; p <= Math.min(pdf.numPages, 30); p++) {
+            var page = await pdf.getPage(p);
+            var tc = await page.getTextContent();
+            text += tc.items.map(function (it) { return it.str; }).join(' ') + '\n';
+          }
+          $('distill-text').value = text.slice(0, 50000);
+          $('distill-status').textContent = '✓ PDF 文本已提取（' + Math.min(pdf.numPages, 30) + ' 页）';
+        } catch (e) {
+          $('distill-status').textContent = '✗ PDF 解析失败：' + e.message;
+        }
+      };
+      fr.readAsArrayBuffer(file);
+    } else {
+      var r2 = new FileReader();
+      r2.onload = function () { $('distill-text').value = String(r2.result).slice(0, 50000); $('distill-status').textContent = '✓ 已载入 ' + file.name; };
+      r2.readAsText(file, 'utf-8');
+    }
+  }
+
+  window.runDistill = async function () {
+    var text = $('distill-text').value.trim();
+    if (text.length < 100) { alert('请先上传或粘贴至少 100 字的材料文本'); return; }
+    var btn = event && event.target;
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 蒸馏中…'; }
+    $('distill-status').textContent = '🧪 正在蒸馏：摘要 / 知识点 / 公式 / 教学建议 …';
+    var cfg = getChatConfig();
+    var worker = (cfg.workerUrl || 'https://statllm.mentalhealthresearch.top').replace(/\/+$/, '');
+    var box = $('distill-result');
+    try {
+      var resp = await fetch(worker + '/api/distill', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, baseUrl: cfg.baseUrl })
+      });
+      var j = await resp.json();
+      if (!j.ok) throw new Error(j.error || '蒸馏失败');
+      var r = j.result || {};
+      var html = '<div class="card"><h3>📋 ' + esc(r.title || '蒸馏结果') + '</h3>' +
+        '<div style="background:var(--bg-soft);border-radius:10px;padding:14px;font-size:13.5px;color:var(--ink2);line-height:1.9">' + mdInline(r.summary || '') + '</div></div>';
+      if ((r.keywords || []).length) html += '<div class="card"><h3>🏷️ 关键词</h3>' + r.keywords.map(function (k) { return '<span class="tag tag-gold">' + esc(k) + '</span>'; }).join('') + '</div>';
+      if ((r.knowledge_points || []).length) {
+        html += '<div class="card"><h3>🧠 知识点蒸馏</h3>';
+        r.knowledge_points.forEach(function (kp, i) {
+          html += '<div style="border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px">' +
+            '<b style="color:var(--primary)">' + (i + 1) + '. ' + esc(kp.name || '') + '</b>' +
+            (kp.course ? ' <span class="tag">' + esc(kp.course) + '</span>' : '') +
+            '<div style="font-size:13px;color:var(--ink2);margin-top:6px"><b>定义：</b>' + mdInline(kp.definition || '') + '</div>' +
+            '<div style="font-size:13px;color:var(--ink2);margin-top:4px;background:var(--accent-soft);border-radius:8px;padding:8px 10px"><b>通俗理解：</b>' + mdInline(kp.explanation || '') + '</div></div>';
+        });
+        html += '</div>';
+      }
+      if ((r.key_formulas || []).length) html += '<div class="card"><h3>📐 重要公式</h3>' + r.key_formulas.map(function (f) { return '<div style="font-family:var(--mono);background:var(--bg-soft);border-radius:8px;padding:6px 10px;margin:4px 0;font-size:13px">' + esc(f) + '</div>'; }).join('') + '</div>';
+      if ((r.confusions || []).length) html += '<div class="card"><h3>⚠️ 易混淆点</h3>' + r.confusions.map(function (c) { return '<div style="font-size:13px;color:var(--ink2);margin:4px 0">• ' + mdInline(c) + '</div>'; }).join('') + '</div>';
+      if (r.teaching_suggestions) html += '<div class="card"><h3>👩‍🏫 教学建议</h3><div style="font-size:13px;color:var(--ink2);line-height:1.8">' + mdInline(r.teaching_suggestions) + '</div></div>';
+      if ((r.related_topics || []).length) html += '<div class="card"><h3>🔗 延伸主题</h3>' + r.related_topics.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>';
+      html += '<div class="card"><button class="btn btn-soft btn-sm" onclick="copyDistill()">📋 复制蒸馏结果</button></div>';
+      box.innerHTML = html;
+      window._lastDistill = r;
+    } catch (e) {
+      box.innerHTML = '<div class="warn-box">⚠️ 蒸馏失败：' + esc(e.message) + '<br><span class="hint">请确认已在「知识问答」页配置 DeepSeek API Key。</span></div>';
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '🧪 开始蒸馏'; }
+    $('distill-status').textContent = '';
+  };
+  window.copyDistill = function () {
+    var r = window._lastDistill;
+    if (!r) return;
+    var txt = '## ' + (r.title || '蒸馏结果') + '\n\n' + (r.summary || '') +
+      '\n\n### 知识点\n' + (r.knowledge_points || []).map(function (k) { return '**' + k.name + '**：' + k.definition + '（通俗理解：' + k.explanation + '）'; }).join('\n') +
+      '\n\n### 公式\n' + (r.key_formulas || []).join('\n') + '\n\n### 易混淆点\n' + (r.confusions || []).map(function (c) { return '- ' + c; }).join('\n') +
+      '\n\n### 教学建议\n' + (r.teaching_suggestions || '');
+    navigator.clipboard.writeText(txt).then(function () { alert('蒸馏结果已复制'); });
+  };
+
+  /* ==========================================================
+   * 七、教案工坊（检索 → 教案 → pptx）
+   * ========================================================== */
+  var lessonCtx = '';
+  window.runLesson = async function () {
+    var topic = $('lesson-topic').value.trim();
+    if (!topic) { alert('请输入课程主题'); return; }
+    var btn = event && event.target;
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 生成中（检索教材文献 + 大模型设计）…'; }
+    var box = $('lesson-result');
+    box.innerHTML = '<p class="hint">🔍 正在检索教材库与学术文献，并设计教案…</p>';
+    var cfg = getChatConfig();
+    var worker = (cfg.workerUrl || 'https://statllm.mentalhealthresearch.top').replace(/\/+$/, '');
+    try {
+      // 1. 本地知识库检索 + 学术文献检索，拼 context
+      var kbHits = KB.search(topic, 3);
+      var ctx = kbHits.map(function (h) { return '[教材知识点] ' + h.title + '：' + h.content.slice(0, 300) + '（来源：' + h.source + '）'; }).join('\n');
+      lessonCtx = ctx;
+      try {
+        var lr = await fetch(worker + '/api/search-literature', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: topic })
+        });
+        var lj = await lr.json();
+        if (lj.ok && lj.results) {
+          var litCtx = lj.results.slice(0, 6).map(function (it) {
+            return '[文献] ' + it.title + '（' + it.source + ', ' + it.year + '）：' + (it.abstract || '').slice(0, 200);
+          }).join('\n');
+          lessonCtx = ctx + '\n' + litCtx;
+        }
+      } catch (e) { /* 文献检索失败不阻塞教案生成 */ }
+      // 2. 调用教案生成
+      var resp = await fetch(worker + '/api/lesson', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic, context: lessonCtx, provider: cfg.provider, apiKey: cfg.apiKey, model: cfg.model, baseUrl: cfg.baseUrl })
+      });
+      var j = await resp.json();
+      if (!j.ok) throw new Error(j.error || '教案生成失败');
+      renderLesson(j.lesson, j.outline || []);
+    } catch (e) {
+      box.innerHTML = '<div class="warn-box">⚠️ 教案生成失败：' + esc(e.message) + '<br><span class="hint">请确认已在「知识问答」页配置 DeepSeek API Key。</span></div>';
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '📝 生成教案'; }
+  };
+
+  function renderLesson(lesson, outline) {
+    var box = $('lesson-result');
+    var html = '<div class="card"><h3>📋 ' + esc(lesson.title || '教案') + '</h3>' +
+      '<p class="hint">' + esc(lesson.target_audience || '') + '　·　' + esc(lesson.duration || '') + '</p>';
+    if ((lesson.teaching_objectives || []).length) {
+      html += '<h4>🎯 教学目标</h4><ul style="font-size:13px;color:var(--ink2);line-height:1.9;padding-left:20px">' +
+        lesson.teaching_objectives.map(function (o) { return '<li>' + mdInline(o) + '</li>'; }).join('') + '</ul>';
+    }
+    if ((lesson.knowledge_framework || []).length) {
+      html += '<h4>🗂️ 知识框架</h4><table class="grid"><thead><tr><th>环节</th><th>要点</th><th>时长</th></tr></thead><tbody>';
+      lesson.knowledge_framework.forEach(function (k) {
+        html += '<tr><td>' + esc(k.section || '') + '</td><td style="text-align:left">' + esc((k.key_points || []).join('、')) + '</td><td>' + (k.duration_min || '—') + 'min</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+    if ((lesson.teaching_process || []).length) {
+      html += '<h4>👩‍🏫 教学过程</h4>';
+      lesson.teaching_process.forEach(function (p) {
+        html += '<div style="border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px">' +
+          '<b style="color:var(--primary)">步骤' + (p.step || '') + '：' + esc(p.name || '') + '</b> <span class="hint">' + (p.minutes || '') + 'min</span>' +
+          '<div style="font-size:13px;color:var(--ink2);margin-top:4px">' + mdInline(p.content || '') + '</div>' +
+          ((p.examples || []).length ? '<div style="font-size:12.5px;color:var(--ink2);margin-top:4px;background:var(--accent-soft);border-radius:8px;padding:6px 10px"><b>📐 举例：</b>' + p.examples.map(function (e) { return mdInline(e); }).join('<br>') + '</div>' : '') +
+          (p.interaction ? '<div class="hint" style="margin-top:4px">💬 互动：' + esc(p.interaction) + '</div>' : '') + '</div>';
+      });
+    }
+    if ((lesson.difficult_points || []).length) {
+      html += '<h4>🧗 难点与突破</h4>';
+      lesson.difficult_points.forEach(function (d) {
+        html += '<div style="font-size:13px;color:var(--ink2);margin:4px 0">• <b>' + esc(d.point || '') + '</b> → ' + mdInline(d.strategy || '') + '</div>';
+      });
+    }
+    if ((lesson.case_studies || []).length) html += '<h4>📚 课堂案例</h4>' + lesson.case_studies.map(function (c) { return '<div style="font-size:13px;color:var(--ink2);margin:4px 0">• ' + mdInline(c) + '</div>'; }).join('');
+    if ((lesson.assignments || []).length) html += '<h4>📝 作业设计</h4>' + lesson.assignments.map(function (a) { return '<div style="font-size:13px;color:var(--ink2);margin:4px 0">• ' + mdInline(a) + '</div>'; }).join('');
+    html += '<h4>📊 考核评价</h4><div style="font-size:13px;color:var(--ink2)">' + mdInline(lesson.assessment || '') + '</div>';
+    if ((lesson.references || []).length) {
+      html += '<h4>📎 参考文献（观点出处）</h4>';
+      lesson.references.forEach(function (r) {
+        html += '<div style="font-size:12.5px;color:var(--ink2);margin:3px 0"><span class="src-chip">出处</span> ' + esc(r.item || '') + ' <span class="hint">（' + esc(r.source || '') + '）</span></div>';
+      });
+    }
+    html += '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">' +
+      '<button class="btn btn-gold" onclick="downloadLessonPptx()">📥 导出 PPT（.pptx）</button>' +
+      '<button class="btn btn-soft" onclick="copyLesson()">📋 复制教案</button></div></div>';
+    box.innerHTML = html;
+    window._lastLesson = lesson;
+    window._lastOutline = outline;
+  }
+  window.copyLesson = function () {
+    var l = window._lastLesson;
+    if (!l) return;
+    var txt = '## ' + l.title + '\n\n### 教学目标\n' + (l.teaching_objectives || []).map(function (o) { return '- ' + o; }).join('\n') +
+      '\n\n### 教学过程\n' + (l.teaching_process || []).map(function (p) { return '**' + (p.name || '') + '**：' + p.content + ((p.examples || []).length ? '\n  例：' + p.examples.join('；') : ''); }).join('\n') +
+      '\n\n### 参考文献\n' + (l.references || []).map(function (r) { return '- ' + r.item + '（' + r.source + '）'; }).join('\n');
+    navigator.clipboard.writeText(txt).then(function () { alert('教案已复制'); });
+  };
+  window.downloadLessonPptx = function () {
+    var lesson = window._lastLesson, outline = window._lastOutline;
+    if (!lesson || !window.pptxgen) { alert('PPT 组件未就绪或暂无教案'); return; }
+    try {
+      var pptx = new window.pptxgen();
+      pptx.defineLayout({ name: 'WIDE', width: 13.33, height: 7.5 });
+      pptx.layout = 'WIDE';
+      var NAVY = '1E3A5F', GOLD = 'C9B037', GRAY = '6B7280', BODY = '44566C';
+      var fontFace = 'Microsoft YaHei';
+      (outline && outline.length ? outline : []).forEach(function (s, i) {
+        if (s.type === 'cover') {
+          var slide = pptx.addSlide();
+          slide.background = { color: NAVY };
+          slide.addText(s.title, { x: 0.8, y: 2.2, w: 11.7, h: 1.4, fontSize: 36, bold: true, color: 'FFFFFF', fontFace: fontFace, align: 'center' });
+          slide.addShape('line', { x: 4.5, y: 3.7, w: 4.3, h: 0, line: { color: GOLD, width: 2 } });
+          slide.addText(s.subtitle || '', { x: 0.8, y: 4.0, w: 11.7, h: 0.6, fontSize: 16, color: GOLD, fontFace: fontFace, align: 'center' });
+          slide.addText(s.meta || '', { x: 0.8, y: 4.7, w: 11.7, h: 0.5, fontSize: 12, color: 'B8C4D4', fontFace: fontFace, align: 'center' });
+        } else {
+          var s2 = pptx.addSlide();
+          s2.background = { color: 'FFFFFF' };
+          s2.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.9, fill: { color: NAVY } });
+          s2.addText(s.title, { x: 0.5, y: 0.16, w: 11.5, h: 0.6, fontSize: 22, bold: true, color: 'FFFFFF', fontFace: fontFace });
+          if (s.type === 'ref') {
+            (s.items || []).forEach(function (it, k) {
+              s2.addText((k + 1) + '. ' + it, { x: 0.6, y: 1.2 + k * 0.55, w: 12.1, h: 0.5, fontSize: 13, color: BODY, fontFace: fontFace, valign: 'top' });
+            });
+          } else {
+            var items = s.items || [];
+            var lines = items.map(function (it) { return '• ' + it; });
+            s2.addText(lines.join('\n'), {
+              x: 0.6, y: 1.1, w: 12.1, h: 5.9, fontSize: 15, color: BODY, fontFace: fontFace, valign: 'top', paraSpaceAfterPt: 10, lineSpacingMultiple: 1.15
+            });
+          }
+          s2.addText('「数智统计」教案 · 第 ' + (i + 1) + ' 页', { x: 0.5, y: 7.1, w: 5, h: 0.3, fontSize: 9, color: GRAY, fontFace: fontFace });
+        }
+      });
+      var fname = '教案_' + (lesson.title || '统计课') + '.pptx';
+      pptx.writeFile({ fileName: fname });
+    } catch (e) {
+      alert('PPT 生成失败：' + e.message);
+    }
+  };
+
   /* ================= 初始化 ================= */
   document.addEventListener('DOMContentLoaded', function () {
     renderSuggestions();
@@ -1725,7 +2088,8 @@
       addMsg('ai', '<b>你好！我是「数智统计」答疑助手。</b><br><br>' +
         '我可以帮你：<br>' +
         '📖 讲解统计概念、辨析易混淆术语、引导证明题思路（回答附带来源引用）<br>' +
-        '📊 引导数据分析：切换到「数据分析 Agent」上传数据即可自动完成清洗、检验、建模与报告<br><br>' +
+        '📊 引导数据分析：切换到「数据分析 Agent」上传数据即可自动完成清洗、检验、建模与报告<br>' +
+        '📚 浏览教学资源、检索文献、蒸馏知识、生成教案（顶部导航直达）<br><br>' +
         '先试试下面的推荐问题，或在输入框直接提问～');
     }, 200);
   });
