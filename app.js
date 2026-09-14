@@ -2053,6 +2053,27 @@
           slide.addShape('line', { x: 4.5, y: 3.7, w: 4.3, h: 0, line: { color: GOLD, width: 2 } });
           slide.addText(s.subtitle || '', { x: 0.8, y: 4.0, w: 11.7, h: 0.6, fontSize: 16, color: GOLD, fontFace: fontFace, align: 'center' });
           slide.addText(s.meta || '', { x: 0.8, y: 4.7, w: 11.7, h: 0.5, fontSize: 12, color: 'B8C4D4', fontFace: fontFace, align: 'center' });
+        } else if (s.type === 'chart') {
+          var c = s.chart || {};
+          var chartSlide = pptx.addSlide();
+          chartSlide.background = { color: 'FFFFFF' };
+          chartSlide.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.9, fill: { color: NAVY } });
+          chartSlide.addText(s.title, { x: 0.5, y: 0.16, w: 11.5, h: 0.6, fontSize: 22, bold: true, color: 'FFFFFF', fontFace: fontFace });
+          try {
+            var chartType = { bar: 'bar', line: 'line', scatter: 'scatter', pie: 'doughnut' }[c.type] || 'bar';
+            var series = (c.series || []).map(function (sr) {
+              return { name: sr.name || '数值', labels: c.labels || [], values: (sr.data || []).map(Number) };
+            });
+            chartSlide.addChart(chartType, series, {
+              x: 1.0, y: 1.3, w: 8.6, h: 4.8,
+              xValAxisLabel: c.xLabel || '', yValAxisLabel: c.yLabel || '',
+              showLegend: series.length > 1, legendPos: 'b',
+              catAxisLabelFontFace: fontFace, valAxisLabelFontFace: fontFace,
+              chartColors: [GOLD, NAVY, '3A6B9E', '8B5CF6', '10B981'], showTitle: false
+            });
+          } catch (e) { /* 图表失败不影响整体 */ }
+          if (c.note) chartSlide.addText('💡 ' + c.note, { x: 1.0, y: 6.4, w: 11.0, h: 0.6, fontSize: 12, color: BODY, fontFace: fontFace });
+          chartSlide.addText('「数智统计」教案 · 第 ' + (i + 1) + ' 页', { x: 0.5, y: 7.1, w: 5, h: 0.3, fontSize: 9, color: GRAY, fontFace: fontFace });
         } else {
           var s2 = pptx.addSlide();
           s2.background = { color: 'FFFFFF' };
