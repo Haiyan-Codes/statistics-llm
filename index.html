@@ -802,68 +802,24 @@ table.grid td.cat{color:var(--primary-2)}
   <div class="gold-bar"></div>
   <div class="card">
     <h3>🏛️ 项目背景</h3>
-    <p style="font-size:13.5px;color:var(--ink2);line-height:1.9">
-      为深入贯彻习近平总书记关于"积极推动人工智能和教育深度融合，促进教育变革创新"的重要指示精神，教育部高等教育司组织开展高等教育领域学科大模型征集建设工作（教高司函〔2026〕9号）。
-      华东师范大学联合高等教育出版社，依托统计学学科深厚积累与权威教材资源，申报建设<b style="color:var(--primary)">统计学学科大模型「数智统计」</b>。
-      项目覆盖统计学类 2 个专业（统计学、数据科学）主干课程，构建权威高质量数据集，依托国产通用大模型增量训练，
-      形成"AI+统计学"可复制推广的教学新模式，最终上线国家高等教育智慧教育平台。
+    <p style="font-size:14px;color:var(--ink2);line-height:2">
+      为深入贯彻习近平总书记关于"积极推动人工智能和教育深度融合，促进教育变革创新"的重要指示精神，同时响应教育部高等教育司组织开展高等教育领域学科大模型征集建设工作。
+      华东师范大学依托统计学学科深厚积累与权威教材资源，申报建设<b style="color:var(--primary)">统计学学科大模型「数智统计」</b>。
+      项目覆盖统计学类 2 个专业（统计学、数据科学）主干课程，构建权威高质量数据集，依托国产通用大模型增量训练，形成"AI+统计学"可复制推广的教学新模式。
     </p>
   </div>
-  <div class="about-grid">
-    <div class="card">
-      <h3>🏗️ 技术架构</h3>
-      <div class="arch-box">┌─────────────────────────────────────────┐
-│  前端 SPA（GitHub Pages / 本地均可运行）  │
-│  index.html + knowledge.js + stats-engine │
-└──────────────┬──────────────────────────┘
-               │  HTTPS + CORS
-      ┌────────▼────────────────┐
-      │ Cloudflare Worker 后端   │
-      │  · LLM 多供应商网关       │
-      │  · 限流 / KV 缓存 / 审计  │
-      └────────┬────────────────┘
-      ┌────────▼────────────────┐
-      │  DeepSeek / Qwen 等      │
-      │  国产通用大模型 API      │
-      └─────────────────────────┘
-统计计算：前端原生 JS 引擎（零依赖）
-知识检索：本地知识库 RAG（可溯源）</div>
-    </div>
-    <div class="card">
-      <h3>📚 知识库来源</h3>
-      <div id="about-sources"></div>
-      <h3>🎯 评测保障</h3>
-      <p style="font-size:13px;color:var(--ink2);line-height:1.9">
-        依照通知要求，通过<b>安全评测、学科通用能力评测、学科基准评测、模型效能评测</b>四维评测方可上线；
-        目标：知识问答准确率 ≥90%、数据分析任务成功率 ≥85%、回答溯源覆盖率 ≥95%、支持 ≥100 并发用户。
-      </p>
-    </div>
-  </div>
-  <div class="card" style="margin-top:18px">
-    <h3>📚 开放教材与资料库</h3>
-    <p style="font-size:13px;color:var(--ink2);line-height:1.9">
-      平台知识库持续从以下<b style="color:var(--primary)">开放授权</b>资源扩充（本地已存档至科研资料硬盘，供课程组使用）：
+  <div class="card">
+    <h3>🆕 平台更新公告</h3>
+    <p style="font-size:14px;color:var(--ink2);line-height:2">
+      本平台正处于<b style="color:var(--primary)">内测阶段</b>，教学资源（教材、文献）与功能模块正在<b style="color:var(--primary)">陆续更新中</b>，敬请期待！
     </p>
-    <div style="margin-top:8px">
-      <span class="tag tag-gold">OpenIntro Statistics 4th（CC BY-SA）</span>
-      <span class="tag tag-gold">NIST/SEMATECH e-Handbook（公共领域）</span>
-      <span class="tag tag-gold">JASA 2026 学科前沿观点</span>
-      <span class="tag">华东师大统计学院课程讲义</span>
-      <span class="tag">高等教育出版社权威教材</span>
-    </div>
-    <p class="hint" style="margin-top:10px">资源下载：OpenIntro 官方 openintro.org（免费 PDF）；NIST e-Handbook：itl.nist.gov/div898/handbook（公共领域，可自由使用）。全部来源均符合开放授权规范，版权清晰可溯。</p>
+    <p style="font-size:14px;color:var(--ink2);line-height:2;margin-top:6px">
+      我们非常欢迎各位老师、同学提出使用建议与改进意见。如有任何想法，欢迎发送邮件至开发者邮箱：<a href="mailto:Haiyanzhu_s_mail@163.com" style="color:var(--primary-2);font-weight:600;text-decoration:underline">Haiyanzhu_s_mail@163.com</a>
+    </p>
   </div>
   <div class="card">
     <h3>🧭 学科前沿 · AI 时代统计学（JASA 2026）</h3>
     <div id="frontier-list"></div>
-  </div>
-  <div class="card">
-    <h3>📌 演示提示</h3>
-    <p style="font-size:13px;color:var(--ink2);line-height:2">
-      ① 在「知识问答」页可切换本地知识库模式离线体验，配置 DeepSeek API Key 后获得更强的生成式答疑；<br>
-      ② 在「数据分析 Agent」页点击任意示例数据 →「一键全量分析」，体验从数据清洗到检验、回归、图表、报告的全流程；<br>
-      ③ 在「教案工坊」页输入课程主题，自动检索教材与文献生成教案，并可一键导出 .pptx；「知识蒸馏」可上传材料提炼知识点。
-    </p>
   </div>
 </section>
 </main>
