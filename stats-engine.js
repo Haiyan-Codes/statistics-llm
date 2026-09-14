@@ -465,6 +465,131 @@
     };
   }
 
+  /* ---- 非参数检验 ---- */
+  function rankArray(values) {
+    // 平均秩（并列取平均）
+    var idx = values.map(function (v, i) { return { v: v, i: i }; })
+      .sort(function (a, b) { return a.v - b.v; });
+    var ranks = new Array(values.length);
+    var i = 0;
+    while (i < idx.length) {
+      var j = i;
+      while (j + 1 < idx.length && idx[j + 1].v === idx[i].v) j++;
+      var avg = (i + j) / 2 + 1;
+      for (var k = i; k <= j; k++) ranks[idx[k].i] = avg;
+      i = j + 1;
+    }
+    return ranks;
+  }
+
+  /* Wilcoxon 秩和检验（Mann-Whitney U）— 两独立样本 */
+  function wilcoxonRankSum(a, b) {
+    var n1 = a.length, n2 = b.length;
+    if (n1 < 3 || n2 < 3) return null;
+    var all = a.map(function (v) { return { v: v, g: 0 }; }).concat(b.map(function (v) { return { v: v, g: 1 }; }));
+    var ranks = rankArray(all.map(function (x) { return x.v; }));
+    var r0 = 0;
+    all.forEach(function (x, idx) { if (x.g === 0) r0 += ranks[idx]; });
+    var U1 = r0 - n1 * (n1 + 1) / 2;
+    var U2 = n1 * n2 - U1;
+    var mu = n1 * n2 / 2;
+    var sigma = Math.sqrt(n1 * n2 * (n1 + n2 + 1) / 12);
+    if (!sigma) return null;
+    var Umax = Math.max(U1, U2);
+    var z = (Umax - mu - 0.5) / sigma; // 连续性校正
+    var p = 2 * (1 - normCdf(Math.abs(z)));
+    return {
+      method: 'Wilcoxon 秩和检验（Mann-Whitney U）',
+      U: U1, z: z, p: p, n1: n1, n2: n2,
+      medianA: median(a), medianB: median(b),
+      significant: p < 0.05
+    };
+  }
+
+  /* Wilcoxon 符号秩检验 — 配对样本 */
+  function wilcoxonSignedRank(a, b) {
+    var diffs = [], i;
+    for (i = 0; i < Math.min(a.length, b.length); i++) {
+      var d = a[i] - b[i];
+      if (d !== 0) diffs.push(d);
+    }
+    var n = diffs.length;
+    if (n < 3) return null;
+    var absSorted = diffs.map(function (d, idx) { return { abs: Math.abs(d), sign: d > 0 ? 1 : -1, idx: idx }; })
+      .sort(function (x, y) { return x.abs - y.abs; });
+    var ranks = rankArray(absSorted.map(function (x) { return x.abs; }));
+    var rankByIdx = {};
+    absSorted.forEach(function (x, k) { rankByIdx[x.idx] = ranks[k]; });
+    var wPlus = 0;
+    diffs.forEach(function (d, idx) { if (d > 0) wPlus += rankByIdx[idx]; });
+    var mu = n * (n + 1) / 4;
+    var sigma = Math.sqrt(n * (n + 1) * (2 * n + 1) / 24);
+    var z = (wPlus - mu) / sigma;
+    var p = 2 * (1 - normCdf(Math.abs(z)));
+    return {
+      method: 'Wilcoxon 符号秩检验（配对）',
+      W: wPlus, z: z, p: p, n: n,
+      medianDiff: median(a) - median(b),
+      significant: p < 0.05
+    };
+  }
+
+  /* Kruskal-Wallis 检验 — 多组独立样本 */
+  function kruskalWallis(groups) {
+    var k = groups.length;
+    if (k < 2) return null;
+    var all = [];
+    groups.forEach(function (g, gi) { g.forEach(function (v) { all.push({ v: v, g: gi }); }); });
+    var ranks = rankArray(all.map(function (x) { return x.v; }));
+    var N = all.length;
+    var ri = new Array(k).fill(0), ni = groups.map(function (g) { return g.length; });
+    all.forEach(function (x, idx) { ri[x.g] += ranks[idx]; });
+    var H = (12 / (N * (N + 1))) * ri.reduce(function (s, r, gi) { return s + r * r / ni[gi]; }, 0) - 3 * (N + 1);
+    // 并列校正
+    var tieCounts = {};
+    all.forEach(function (x) { var key = x.v; tieCounts[key] = (tieCounts[key] || 0) + 1; });
+    var tieAdj = 0;
+    Object.keys(tieCounts).forEach(function (key) {
+      var t = tieCounts[key];
+      if (t > 1) tieAdj += (t * t * t - t);
+    });
+    var denom = 1 - tieAdj / (N * N * N - N);
+    if (denom > 0) H = H / denom;
+    var df = k - 1;
+    var p = 1 - chi2Cdf(H, df);
+    return {
+      method: 'Kruskal-Wallis 检验（非参数 ANOVA）',
+      H: H, df: df, p: p,
+      groupMedians: groups.map(median),
+      significant: p < 0.05
+    };
+  }
+
+  /* ---- 功效分析 ---- */
+  /* 独立样本 t 检验的功效（非中心 t 近似） */
+  function powerTTest(d, n, alpha, twoTailed) {
+    alpha = alpha == null ? 0.05 : alpha;
+    twoTailed = twoTailed !== false;
+    var df = 2 * n - 2;
+    var nc = d * Math.sqrt(n / 2);
+    var tCrit = tInv(df, twoTailed ? 1 - alpha / 2 : 1 - alpha);
+    var p1 = tCdf(tCrit - nc, df);
+    var p2 = twoTailed ? tCdf(-tCrit - nc, df) : 0;
+    var power = 1 - p1 + p2;
+    return { power: Math.max(0, Math.min(1, power)), beta: 1 - power, df: df, nc: nc, tCrit: tCrit };
+  }
+  /* 达到目标功效所需的最小样本量（每组） */
+  function requiredSampleSize(d, alpha, targetPower) {
+    alpha = alpha == null ? 0.05 : alpha;
+    targetPower = targetPower == null ? 0.8 : targetPower;
+    var n = 3;
+    while (n < 5000) {
+      if (powerTTest(d, n, alpha).power >= targetPower) return n;
+      n++;
+    }
+    return -1;
+  }
+
   /* ---- 相关 ---- */
   function pearson(x, y) {
     var n = Math.min(x.length, y.length);
@@ -1176,15 +1301,23 @@
         if (gs.length === 2) {
           var t = tTestIndependent(gs[0], gs[1]);
           if (t) {
-            report.push('**检验**：' + t.method + '，t = ' + fmtNum(t.t, 3) + '，自由度 = ' + fmtNum(t.df, 1) + '，P = ' + fmtP(t.p) + '，Cohen\'s d = ' + fmtNum(t.cohenD, 3));
+            report.push('**检验（参数）**：' + t.method + '，t = ' + fmtNum(t.t, 3) + '，自由度 = ' + fmtNum(t.df, 1) + '，P = ' + fmtP(t.p) + '，Cohen\'s d = ' + fmtNum(t.cohenD, 3));
             report.push('');
             report.push('- ' + (t.significant ? '**结论**：两组均值差异**显著**（P<0.05），效应量 d=' + fmtNum(t.cohenD, 2) + '（' + effectLabel(t.cohenD) + '）。' : '**结论**：两组均值差异**不显著**（P≥0.05），当前数据不足以支持组间差异存在。'));
             report.push('');
+            // 非参数对照
+            var w = wilcoxonRankSum(gs[0], gs[1]);
+            if (w) {
+              report.push('**非参数对照**（稳健性检验，不依赖正态假设）：' + w.method + '，z = ' + fmtNum(w.z, 3) + '，P = ' + fmtP(w.p) + '，组中位数 ' + gNames[0] + '=' + fmtNum(w.medianA) + '，' + gNames[1] + '=' + fmtNum(w.medianB));
+              report.push('');
+              report.push('- 参数与非参数结论' + (t.significant === w.significant ? '**一致**' : '**不一致**（数据可能偏离正态假设，以稳健的非参数结果为主要参考）') + '。');
+              report.push('');
+            }
           }
         } else {
           var anova = anovaOneWay(gs, gNames);
           if (anova) {
-            report.push('**检验**：' + anova.method + '，F(' + anova.df1 + ', ' + anova.df2 + ') = ' + fmtNum(anova.F, 3) + '，P = ' + fmtP(anova.p) + '，η² = ' + fmtNum(anova.eta2, 3));
+            report.push('**检验（参数）**：' + anova.method + '，F(' + anova.df1 + ', ' + anova.df2 + ') = ' + fmtNum(anova.F, 3) + '，P = ' + fmtP(anova.p) + '，η² = ' + fmtNum(anova.eta2, 3));
             report.push('');
             if (anova.significant) {
               report.push('- **结论**：组间差异**显著**（P<0.05），效应量 η²=' + fmtNum(anova.eta2, 2) + '。多重比较（Bonferroni 校正）：');
@@ -1197,6 +1330,14 @@
               report.push('');
             } else {
               report.push('- **结论**：组间差异**不显著**（P≥0.05），不拒绝各组均值相等的原假设。');
+              report.push('');
+            }
+            // 非参数对照
+            var kw = kruskalWallis(gs);
+            if (kw) {
+              report.push('**非参数对照**（Kruskal-Wallis，不依赖正态假设）：H(' + kw.df + ') = ' + fmtNum(kw.H, 3) + '，P = ' + fmtP(kw.p) + '，组中位数：' + gNames.map(function (n, i) { return n + '=' + fmtNum(kw.groupMedians[i]); }).join('，'));
+              report.push('');
+              report.push('- 参数与非参数结论' + (anova.significant === kw.significant ? '**一致**' : '**不一致**（数据可能偏离正态假设，以稳健的非参数结果为主要参考）') + '。');
               report.push('');
             }
           }
@@ -1410,6 +1551,11 @@
   STAT.tTestOneSample = tTestOneSample;
   STAT.tTestIndependent = tTestIndependent;
   STAT.tTestPaired = tTestPaired;
+  STAT.wilcoxonRankSum = wilcoxonRankSum;
+  STAT.wilcoxonSignedRank = wilcoxonSignedRank;
+  STAT.kruskalWallis = kruskalWallis;
+  STAT.powerTTest = powerTTest;
+  STAT.requiredSampleSize = requiredSampleSize;
   STAT.anovaOneWay = anovaOneWay;
   STAT.chi2Test = chi2Test;
   STAT.pearson = pearson;
