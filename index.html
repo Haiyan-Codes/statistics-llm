@@ -568,6 +568,19 @@ table.grid td.cat{color:var(--primary-2)}
     </div>
   </div>
 
+  <div class="card">
+    <h3>📊 功效分析计算器</h3>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+      <div><label class="hint" style="display:block;margin-bottom:4px">效应量 Cohen's d</label><input id="pw-d" type="number" value="0.5" step="0.05" min="0.05" style="width:90px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit"></div>
+      <div><label class="hint" style="display:block;margin-bottom:4px">每组样本量 n</label><input id="pw-n" type="number" value="30" step="5" min="3" style="width:90px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit"></div>
+      <div><label class="hint" style="display:block;margin-bottom:4px">显著性水平 α</label><select id="pw-a" style="width:90px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit"><option value="0.01">0.01</option><option value="0.05" selected>0.05</option><option value="0.10">0.10</option></select></div>
+      <button class="btn btn-primary btn-sm" onclick="calcPower()">计算功效</button>
+      <button class="btn btn-soft btn-sm" onclick="calcSampleSize()">求所需样本量（功效0.8）</button>
+      <div class="hint" style="flex-basis:100%">功效 1−β = 正确拒绝 H₀ 的能力；一般建议功效 ≥ 0.80。用于实验/问卷设计前的事先规划。</div>
+    </div>
+    <div id="pw-result" style="margin-top:12px;font-size:13.5px;color:var(--ink2);line-height:1.9"></div>
+  </div>
+
   <div id="data-result" style="display:none">
     <div class="data-tabs">
       <button class="active" data-tab="overview" onclick="switchDataTab('overview')">数据概览</button>
@@ -639,6 +652,18 @@ table.grid td.cat{color:var(--primary-2)}
     </div>
     <p class="hint" style="margin-top:10px">资源均来自开放授权来源（OpenIntro CC、NIST 公共领域、arXiv/OpenAlex OA、OTexts 等），版权合规，可自由用于教学。教材与文献全文已存档至课程组资料硬盘，本站提供分类浏览与下载。</p>
   </div>
+  <div class="card" style="padding:14px 18px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input id="lib-search" type="text" placeholder="🔍 在文献中搜索关键词（标题/摘要/来源）…" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;outline:none" oninput="renderLibContent(null,true)">
+      <select id="lib-sort" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px" onchange="renderLibContent(null,true)">
+        <option value="default">默认排序</option>
+        <option value="year">按年份 ↓</option>
+        <option value="cited">按被引 ↓</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" id="lib-fav-btn" onclick="toggleFavFilter()">⭐ 只看收藏</button>
+      <span class="hint" id="lib-filter-info"></span>
+    </div>
+  </div>
   <div class="data-tabs" id="lib-tabs"></div>
   <div id="lib-content"></div>
 </section>
@@ -686,11 +711,16 @@ table.grid td.cat{color:var(--primary-2)}
   <div class="gold-bar"></div>
   <div class="card">
     <h3>输入课程主题，自动生成教案 + PPT</h3>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <input id="lesson-topic" type="text" placeholder="例如：中心极限定理的教学设计 / 多重共线性诊断 / 指数平滑预测方法" style="flex:1;min-width:300px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')runLesson()">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input id="lesson-topic" type="text" placeholder="例如：中心极限定理的教学设计 / 多重共线性诊断 / 指数平滑预测方法" style="flex:1;min-width:280px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')runLesson()">
+      <select id="lesson-type" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px">
+        <option value="theory">📖 理论课</option>
+        <option value="lab">🧪 实验/实训课</option>
+        <option value="review">📚 复习课</option>
+      </select>
       <button class="btn btn-primary" onclick="runLesson()">📝 生成教案</button>
     </div>
-    <p class="hint" style="margin-top:8px">流程：自动检索教材库与学术文献 → 大模型设计完整教案（教学目标/知识框架/教学过程/难点突破/作业考核）→ 每个观点标注出处 → 一键导出可编辑 <b>.pptx</b>。</p>
+    <p class="hint" style="margin-top:8px">流程：自动检索教材库与学术文献 → 按所选课型设计教案（教学目标/知识框架/教学过程/难点突破/作业考核）→ 每个观点标注出处 → 一键导出可编辑 <b>.pptx</b> 或讲义 <b>.md</b>。</p>
   </div>
   <div id="lesson-result"></div>
 </section>
