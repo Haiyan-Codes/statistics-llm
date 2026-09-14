@@ -1429,11 +1429,15 @@
   STAT.tCdf = tCdf;
   STAT.tInv = tInv;
   STAT.fCdf = fCdf;
+  STAT.fInv = fInv;
   STAT.chi2Cdf = chi2Cdf;
+  STAT.chi2Pval = chi2Pval;
+  STAT.chi2Inv = chi2Inv;
   STAT.mean = mean;
   STAT.sd = sd;
   STAT.median = median;
   STAT.quantile = quantile;
+  STAT.gammaLn = gammaLn;
   STAT.fmtP = fmtP;
   STAT.fmtNum = fmtNum;
   STAT.fmtInt = fmtInt;
