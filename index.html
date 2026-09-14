@@ -340,7 +340,10 @@ table.grid td.cat{color:var(--primary-2)}
       <button data-p="home" class="active" onclick="go('home')">首页</button>
       <button data-p="chat" onclick="go('chat')">知识问答</button>
       <button data-p="data" onclick="go('data')">数据分析Agent</button>
-      <button data-p="viz" onclick="go('viz')">多模态教学</button>
+      <button data-p="library" onclick="go('library')">📚资源库</button>
+      <button data-p="litsearch" onclick="go('litsearch')">文献检索</button>
+      <button data-p="distill" onclick="go('distill')">知识蒸馏</button>
+      <button data-p="lesson" onclick="go('lesson')">教案工坊</button>
       <button data-p="about" onclick="go('about')">关于</button>
     </nav>
   </div>
@@ -356,7 +359,7 @@ table.grid td.cat{color:var(--primary-2)}
     <div class="hero-actions">
       <button class="btn btn-gold" onclick="go('chat')">💬 开始提问</button>
       <button class="btn btn-ghost-w" onclick="go('data')">📊 分析数据</button>
-      <button class="btn btn-ghost-w" onclick="go('viz')">🎯 可视化实验室</button>
+      <button class="btn btn-ghost-w" onclick="go('lesson')">📝 教案工坊</button>
     </div>
     <div class="hero-metrics">
       <div><b>6</b><span>核心课程覆盖</span></div>
@@ -383,12 +386,12 @@ table.grid td.cat{color:var(--primary-2)}
       <p>学生上传数据（CSV/Excel）后自动完成<b>数据清洗、探索性分析、统计建模、结果解释与可视化呈现</b>，自动选择合适统计方法并解释理由，辅助教师开展案例教学、实验实训与作业评阅。</p>
       <div class="cap-go">进入分析 →</div>
     </div>
-    <div class="cap-card" onclick="go('viz')">
+    <div class="cap-card" onclick="go('library')">
       <div class="cap-num">03</div>
-      <div class="cap-ico c3">🎯</div>
-      <h3>多模态教学应用</h3>
-      <p>统计概念<b>动态可视化</b>与虚拟仿真实验：中心极限定理、大数定律、置信区间、检验功效等抽象概念，可通过调节参数直观观察统计规律变化，将"理解"从被动接受变为主动探索。</p>
-      <div class="cap-go">进入实验室 →</div>
+      <div class="cap-ico c3">📚</div>
+      <h3>教学资源与文献</h3>
+      <p><b>开放教材与文献库</b>：覆盖六大课程方向的开放授权教材与 OA 文献分类展示，支持一键下载；内置<b>文献检索</b>多源学术搜索引擎，助力科研与备课。</p>
+      <div class="cap-go">进入资源库 →</div>
     </div>
   </div>
 
@@ -547,32 +550,73 @@ table.grid td.cat{color:var(--primary-2)}
   </div>
 </section>
 
-<!-- ==================== 多模态教学 ==================== -->
-<section id="page-viz" class="page">
-  <div class="section-title">多模态教学 · 统计概念动态可视化</div>
+<!-- ==================== 资源库 ==================== -->
+<section id="page-library" class="page">
+  <div class="section-title">📚 教学资源库</div>
   <div class="gold-bar"></div>
-  <div class="viz-layout">
-    <div class="viz-menu" id="viz-menu">
-      <button class="active" data-viz="clt"><span class="vi">🎲</span>中心极限定理</button>
-      <button data-viz="lln"><span class="vi">📉</span>大数定律</button>
-      <button data-viz="ci"><span class="vi">🎯</span>置信区间模拟</button>
-      <button data-viz="power"><span class="vi">⚡</span>检验功效</button>
-      <button data-viz="normal"><span class="vi">🔔</span>正态分布曲线</button>
-      <button data-viz="reg"><span class="vi">📈</span>回归拟合演示</button>
-      <button data-viz="tdist"><span class="vi">🧪</span>t 分布 vs 正态</button>
-      <button data-viz="chi2"><span class="vi">📊</span>卡方分布</button>
-      <button data-viz="errors"><span class="vi">⚖️</span>两类错误模拟</button>
-      <button data-viz="pvalue"><span class="vi">🔍</span>P 值动画</button>
+  <div class="card">
+    <div class="stat-cards" id="lib-stats" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><b id="lib-tb-count">0</b><span>开放教材/讲义</span></div>
+      <div class="stat-card"><b id="lib-lit-count">0</b><span>开放获取文献</span></div>
+      <div class="stat-card"><b>6</b><span>课程方向</span></div>
+      <div class="stat-card"><b id="lib-oa-count">0</b><span>已下载 OA 全文</span></div>
     </div>
-    <div class="viz-stage">
-      <div class="card">
-        <h3 id="viz-title">中心极限定理</h3>
-        <div class="viz-run" id="viz-controls"></div>
-        <canvas id="viz-canvas" width="860" height="430"></canvas>
-        <div class="viz-notes" id="viz-notes"></div>
-      </div>
+    <p class="hint" style="margin-top:10px">资源均来自开放授权来源（OpenIntro CC、NIST 公共领域、arXiv/OpenAlex OA、OTexts 等），版权合规，可自由用于教学。教材与文献全文已存档至课程组资料硬盘，本站提供分类浏览与下载。</p>
+  </div>
+  <div class="data-tabs" id="lib-tabs"></div>
+  <div id="lib-content"></div>
+</section>
+
+<!-- ==================== 文献检索 ==================== -->
+<section id="page-litsearch" class="page">
+  <div class="section-title">🔍 文献检索</div>
+  <div class="gold-bar"></div>
+  <div class="card">
+    <h3>多源学术检索</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input id="lit-q" type="text" placeholder="输入检索词，如：penalized regression / 贝叶斯推断 / 时间序列预测" style="flex:1;min-width:280px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')searchLit()">
+      <button class="btn btn-primary" onclick="searchLit()">🔍 检索</button>
+    </div>
+    <p class="hint" style="margin-top:8px">聚合 OpenAlex / Crossref / arXiv（stat）三源，优先开放获取（OA）文献，带摘要、DOI、引用数与全文链接。</p>
+  </div>
+  <div id="lit-result"><p class="hint">输入关键词开始检索～</p></div>
+</section>
+
+<!-- ==================== 知识蒸馏 ==================== -->
+<section id="page-distill" class="page">
+  <div class="section-title">🧪 知识蒸馏</div>
+  <div class="gold-bar"></div>
+  <div class="card">
+    <h3>📤 上传教学材料</h3>
+    <div class="upload-zone" id="distill-zone">
+      <div class="big">📄</div>
+      <div>点击或拖拽上传 <b>PDF / TXT / MD</b>，或直接粘贴文本<br><span class="hint">支持教材章节、讲义、论文全文；由大模型蒸馏为「摘要 + 知识点 + 公式 + 易错点 + 教学建议」</span></div>
+      <input type="file" id="distill-file" accept=".pdf,.txt,.md,.csv" style="display:none">
+    </div>
+    <div style="margin-top:12px">
+      <textarea id="distill-text" rows="5" placeholder="或在此粘贴材料文本（教材片段/论文摘要等）…" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13.5px;resize:vertical;outline:none"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary" onclick="runDistill()">🧪 开始蒸馏</button>
+      <span class="hint" id="distill-status"></span>
     </div>
   </div>
+  <div id="distill-result"></div>
+</section>
+
+<!-- ==================== 教案工坊 ==================== -->
+<section id="page-lesson" class="page">
+  <div class="section-title">📝 教师教案设计与分析</div>
+  <div class="gold-bar"></div>
+  <div class="card">
+    <h3>输入课程主题，自动生成教案 + PPT</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input id="lesson-topic" type="text" placeholder="例如：中心极限定理的教学设计 / 多重共线性诊断 / 指数平滑预测方法" style="flex:1;min-width:300px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')runLesson()">
+      <button class="btn btn-primary" onclick="runLesson()">📝 生成教案</button>
+    </div>
+    <p class="hint" style="margin-top:8px">流程：自动检索教材库与学术文献 → 大模型设计完整教案（教学目标/知识框架/教学过程/难点突破/作业考核）→ 每个观点标注出处 → 一键导出可编辑 <b>.pptx</b>。</p>
+  </div>
+  <div id="lesson-result"></div>
 </section>
 
 <!-- ==================== 关于 ==================== -->
@@ -641,7 +685,7 @@ table.grid td.cat{color:var(--primary-2)}
     <p style="font-size:13px;color:var(--ink2);line-height:2">
       ① 在「知识问答」页可切换本地知识库模式离线体验，配置 DeepSeek API Key 后获得更强的生成式答疑；<br>
       ② 在「数据分析 Agent」页点击任意示例数据 →「一键全量分析」，体验从数据清洗到检验、回归、图表、报告的全流程；<br>
-      ③ 在「多模态教学」页调节参数观察统计规律动态变化，适合课堂演示与虚拟仿真实验。
+      ③ 在「教案工坊」页输入课程主题，自动检索教材与文献生成教案，并可一键导出 .pptx；「知识蒸馏」可上传材料提炼知识点。
     </p>
   </div>
 </section>
@@ -652,10 +696,13 @@ table.grid td.cat{color:var(--primary-2)}
   <span>本地原型 v1.0 · 用于申报演示与教学验证</span>
 </footer>
 
-<!-- 脚本加载顺序：知识库 → 扩展知识库 → 统计引擎 → 应用逻辑 -->
+<!-- 脚本加载顺序：知识库 → 扩展知识库 → 统计引擎 → 资源数据 → 应用逻辑 -->
 <script src="knowledge.js"></script>
 <script src="knowledge-extra.js"></script>
 <script src="stats-engine.js"></script>
+<script src="resources-data.js"></script>
+<script src="assets/pptxgen.bundle.js"></script>
+<script src="assets/pdf.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
