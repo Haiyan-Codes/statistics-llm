@@ -145,6 +145,7 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
 .hero .btn-gold{background:var(--accent);color:#2b2400}
 .hero .btn-ghost-w{border:1px solid rgba(255,255,255,.55);color:#fff;background:transparent}
 .hero .btn-ghost-w:hover{background:rgba(255,255,255,.12)}
+.hero-actions .btn-sm{padding:7px 14px;font-size:13px;font-weight:500;backdrop-filter:blur(4px)}
 .hero-metrics{display:flex;gap:34px;margin-top:26px;flex-wrap:wrap}
 .hero-metrics b{font-size:24px;display:block;color:var(--accent);font-family:var(--mono)}
 .hero-metrics span{font-size:12px;color:rgba(255,255,255,.7)}
@@ -378,9 +379,12 @@ table.grid td.cat{color:var(--primary-2)}
     <p>面向统计学与数据科学专业的 <b style="color:#fff">AI+ 教学</b> 平台。以统计学科专属知识库为底座，让抽象定理<b style="color:#fff">看得见</b>、让复杂数据<b style="color:#fff">算得清</b>、让课堂设计<b style="color:#fff">信手拈来</b>——<br>
     三大核心能力：<b style="color:#fff">可溯源的知识问答</b>（不懂就问，一问到底）、<b style="color:#fff">会思考的数据分析教学 Agent</b>（数据喂进来，结论讲出来）、<b style="color:#fff">懂教学的智能教案工坊</b>（课程名一输，教案与课件自动备好），服务学科知识库建设、学生答疑与教师教学。</p>
     <div class="hero-actions">
-      <button class="btn btn-gold" onclick="go('chat')">💬 开始提问</button>
-      <button class="btn btn-ghost-w" onclick="go('data')">📊 分析数据</button>
-      <button class="btn btn-ghost-w" onclick="go('lesson')">📝 教案工坊</button>
+      <button class="btn btn-gold btn-sm" onclick="go('chat')">💬 知识问答</button>
+      <button class="btn btn-ghost-w btn-sm" onclick="go('data')">📊 数据分析Agent</button>
+      <button class="btn btn-ghost-w btn-sm" onclick="go('library')">📚 资源库</button>
+      <button class="btn btn-ghost-w btn-sm" onclick="go('litsearch')">🔍 文献检索</button>
+      <button class="btn btn-ghost-w btn-sm" onclick="go('distill')">🧪 知识蒸馏</button>
+      <button class="btn btn-ghost-w btn-sm" onclick="go('lesson')">📝 教案工坊</button>
     </div>
     <div class="ai-logo-wrap">
       <svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" aria-label="统计学与AI融合标志">
