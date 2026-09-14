@@ -2037,7 +2037,10 @@
       if ((r.confusions || []).length) html += '<div class="card"><h3>⚠️ 易混淆点</h3>' + r.confusions.map(function (c) { return '<div style="font-size:13px;color:var(--ink2);margin:4px 0">• ' + mdInline(c) + '</div>'; }).join('') + '</div>';
       if (r.teaching_suggestions) html += '<div class="card"><h3>👩‍🏫 教学建议</h3><div style="font-size:13px;color:var(--ink2);line-height:1.8">' + mdInline(r.teaching_suggestions) + '</div></div>';
       if ((r.related_topics || []).length) html += '<div class="card"><h3>🔗 延伸主题</h3>' + r.related_topics.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>';
-      html += '<div class="card"><button class="btn btn-soft btn-sm" onclick="copyDistill()">📋 复制蒸馏结果</button></div>';
+      html += '<div class="card"><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn btn-gold" onclick="downloadDistillPptx()">📥 导出 PPT（.pptx）</button>' +
+        '<button class="btn btn-soft" onclick="downloadDistillHtml()">📄 下载知识卡 HTML</button>' +
+        '<button class="btn btn-soft" onclick="copyDistill()">📋 复制蒸馏结果</button></div></div>';
       box.innerHTML = html;
       window._lastDistill = r;
     } catch (e) {
@@ -2054,6 +2057,109 @@
       '\n\n### 公式\n' + (r.key_formulas || []).join('\n') + '\n\n### 易混淆点\n' + (r.confusions || []).map(function (c) { return '- ' + c; }).join('\n') +
       '\n\n### 教学建议\n' + (r.teaching_suggestions || '');
     navigator.clipboard.writeText(txt).then(function () { alert('蒸馏结果已复制'); });
+  };
+
+  /* ---- 蒸馏结果 → PPT outline ---- */
+  function distillToOutline(r) {
+    var slides = [];
+    slides.push({ type: 'cover', title: r.title || '知识蒸馏结果', subtitle: '「数智统计」知识蒸馏 · 自动生成', meta: '来源：用户上传教学材料' });
+    slides.push({ type: 'bullet', title: '📋 核心摘要', items: [r.summary || ''] });
+    var kps = r.knowledge_points || [];
+    // 每页 2 个知识点
+    for (var i = 0; i < kps.length; i += 2) {
+      var items = kps.slice(i, i + 2).map(function (k) {
+        return '**' + (k.name || '') + '**（' + (k.course || '') + '）\n定义：' + (k.definition || '') + '\n通俗理解：' + (k.explanation || '');
+      });
+      slides.push({ type: 'bullet', title: '🧠 知识点 ' + (i / 2 + 1), items: items });
+    }
+    if ((r.key_formulas || []).length) slides.push({ type: 'bullet', title: '📐 重要公式', items: r.key_formulas });
+    if ((r.confusions || []).length) slides.push({ type: 'bullet', title: '⚠️ 易混淆点', items: r.confusions });
+    if (r.teaching_suggestions) slides.push({ type: 'bullet', title: '👩‍🏫 教学建议', items: [r.teaching_suggestions] });
+    if ((r.related_topics || []).length) slides.push({ type: 'bullet', title: '🔗 延伸主题', items: r.related_topics });
+    return slides;
+  }
+
+  window.downloadDistillPptx = function () {
+    var r = window._lastDistill;
+    var Pptx = window.PptxGenJS || window.pptxgen;
+    if (!r) { alert('暂无蒸馏结果，请先进行知识蒸馏'); return; }
+    if (!Pptx) { alert('PPT 组件未就绪，请刷新页面后重试'); return; }
+    try {
+      var pptx = new Pptx();
+      pptx.defineLayout({ name: 'WIDE', width: 13.33, height: 7.5 });
+      pptx.layout = 'WIDE';
+      var NAVY = '1E3A5F', GOLD = 'C9B037', GRAY = '6B7280', BODY = '44566C';
+      var fontFace = 'Microsoft YaHei';
+      distillToOutline(r).forEach(function (s, i) {
+        if (s.type === 'cover') {
+          var slide = pptx.addSlide();
+          slide.background = { color: NAVY };
+          slide.addText(s.title, { x: 0.8, y: 2.2, w: 11.7, h: 1.4, fontSize: 34, bold: true, color: 'FFFFFF', fontFace: fontFace, align: 'center' });
+          slide.addShape('line', { x: 4.5, y: 3.7, w: 4.3, h: 0, line: { color: GOLD, width: 2 } });
+          slide.addText(s.subtitle || '', { x: 0.8, y: 4.0, w: 11.7, h: 0.6, fontSize: 16, color: GOLD, fontFace: fontFace, align: 'center' });
+          slide.addText(s.meta || '', { x: 0.8, y: 4.7, w: 11.7, h: 0.5, fontSize: 12, color: 'B8C4D4', fontFace: fontFace, align: 'center' });
+        } else {
+          var s2 = pptx.addSlide();
+          s2.background = { color: 'FFFFFF' };
+          s2.addShape('rect', { x: 0, y: 0, w: 13.33, h: 0.9, fill: { color: NAVY } });
+          s2.addText(s.title, { x: 0.5, y: 0.16, w: 11.5, h: 0.6, fontSize: 22, bold: true, color: 'FFFFFF', fontFace: fontFace });
+          s2.addText((s.items || []).map(function (it) { return '• ' + it; }).join('\n'), {
+            x: 0.6, y: 1.2, w: 12.1, h: 5.9, fontSize: 15, color: BODY, fontFace: fontFace, valign: 'top', paraSpaceAfterPt: 10, lineSpacingMultiple: 1.15
+          });
+          s2.addText('「数智统计」知识蒸馏 · 第 ' + (i + 1) + ' 页', { x: 0.5, y: 7.1, w: 6, h: 0.3, fontSize: 9, color: GRAY, fontFace: fontFace });
+        }
+      });
+      pptx.writeFile({ fileName: '知识蒸馏_' + (r.title || '结果') + '.pptx' });
+    } catch (e) {
+      alert('PPT 生成失败：' + e.message);
+    }
+  };
+
+  /* ---- 蒸馏结果 → 自包含 HTML 知识卡 ---- */
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function mdLight(s) {
+    return escHtml(s).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+  window.downloadDistillHtml = function () {
+    var r = window._lastDistill;
+    if (!r) { alert('暂无蒸馏结果，请先进行知识蒸馏'); return; }
+    var kps = (r.knowledge_points || []).map(function (k) {
+      return '<div class="kp"><div class="kp-head">🧠 ' + escHtml(k.name || '') +
+        (k.course ? '<span class="tag">' + escHtml(k.course) + '</span>' : '') + '</div>' +
+        '<div class="kp-def"><b>定义</b>：' + mdLight(k.definition || '') + '</div>' +
+        '<div class="kp-exp"><b>通俗理解</b>：' + mdLight(k.explanation || '') + '</div></div>';
+    }).join('');
+    var htmlDoc = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1"><title>' + escHtml(r.title || '知识蒸馏') + '</title>' +
+      '<style>body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#F5F7FA;color:#1E3A5F;margin:0;padding:32px 18px;line-height:1.8}' +
+      '.wrap{max-width:860px;margin:0 auto}.head{background:linear-gradient(135deg,#1E3A5F,#3A6B9E);color:#fff;border-radius:16px;padding:30px 34px;margin-bottom:20px}' +
+      '.head h1{margin:0 0 6px;font-size:26px}.head .sub{color:#F2E3AC;font-size:13px}' +
+      '.card{background:#fff;border:1px solid #D8DEE6;border-radius:14px;padding:20px 24px;margin-bottom:18px}' +
+      '.card h2{margin:0 0 10px;font-size:18px;border-left:4px solid #C9B037;padding-left:10px}' +
+      '.summary{font-size:15px;color:#44566C}' +
+      '.kp{background:#F8FAFD;border:1px solid #D8DEE6;border-radius:12px;padding:14px 16px;margin-bottom:12px}' +
+      '.kp-head{font-weight:700;font-size:15.5px;margin-bottom:6px}.tag{display:inline-block;font-size:11px;background:#F6F0DC;color:#8a6d00;border-radius:12px;padding:1px 9px;margin-left:8px;vertical-align:2px}' +
+      '.kp-def{font-size:14px;color:#44566C;margin:4px 0}.kp-exp{font-size:14px;color:#44566C;background:#F6F0DC;border-radius:8px;padding:8px 12px;margin-top:6px}' +
+      '.formula{font-family:Consolas,Menlo,monospace;background:#F0F4FA;border-radius:8px;padding:8px 12px;margin:6px 0;font-size:14px;color:#1E3A5F}' +
+      '.conf,.ext{font-size:14px;color:#44566C;margin:4px 0}.foot{text-align:center;color:#7A8AA0;font-size:12px;margin-top:26px}' +
+      '</style></head><body><div class="wrap">' +
+      '<div class="head"><h1>' + escHtml(r.title || '知识蒸馏') + '</h1><div class="sub">「数智统计」知识蒸馏 · 华东师范大学统计学院</div></div>' +
+      '<div class="card"><h2>📋 核心摘要</h2><div class="summary">' + mdLight(r.summary || '') + '</div>' +
+      ((r.keywords || []).length ? '<div style="margin-top:10px">' + r.keywords.map(function (k) { return '<span class="tag">' + escHtml(k) + '</span>'; }).join('') + '</div>' : '') + '</div>' +
+      (kps ? '<div class="card"><h2>🧠 知识点</h2>' + kps + '</div>' : '') +
+      ((r.key_formulas || []).length ? '<div class="card"><h2>📐 重要公式</h2>' + r.key_formulas.map(function (f) { return '<div class="formula">' + escHtml(f) + '</div>'; }).join('') + '</div>' : '') +
+      ((r.confusions || []).length ? '<div class="card"><h2>⚠️ 易混淆点</h2>' + r.confusions.map(function (c) { return '<div class="conf">• ' + mdLight(c) + '</div>'; }).join('') + '</div>' : '') +
+      (r.teaching_suggestions ? '<div class="card"><h2>👩‍🏫 教学建议</h2><div class="summary">' + mdLight(r.teaching_suggestions) + '</div></div>' : '') +
+      ((r.related_topics || []).length ? '<div class="card"><h2>🔗 延伸主题</h2>' + r.related_topics.map(function (t) { return '<span class="tag" style="font-size:13px;padding:4px 12px">' + escHtml(t) + '</span>'; }).join('') + '</div>' : '') +
+      '<div class="foot">由「数智统计」统计学学科大模型生成 · 内容源自用户上传材料</div></div></body></html>';
+    var blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '知识蒸馏_' + (r.title || '结果') + '.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   /* ==========================================================
