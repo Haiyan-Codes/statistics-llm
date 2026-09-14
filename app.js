@@ -1887,22 +1887,28 @@
         html += '</div>';
       }
       if (lits.length) {
-        html += '<div class="table-scroll" style="max-height:340px"><table class="grid"><thead><tr><th>文献</th><th>作者</th><th>来源/年份</th><th>被引</th><th></th><th></th></tr></thead><tbody>';
+        html += '<div class="lit-list">';
         lits.slice(0, 40).forEach(function (it) {
-          // 链接优先用原始 OA 全文/DOI（文献 PDF 未上传 GitHub，本地存档仅作徽章）
           var link = it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : '');
-          var localBadge = it.local_pdf ? ' <span class="tag" title="课程组资料硬盘已存全文">📦 本地已存</span>' : '';
+          var localBadge = it.local_pdf ? '<span class="tag" title="课程组资料硬盘已存全文">📦 本地已存</span>' : '';
           var fav = isFav(dkey, it.title);
-          html += '<tr><td style="text-align:left"><b>' + esc(it.title || '') + '</b>' +
-            (it.oa ? ' <span class="tag-gold" style="padding:0 6px;font-size:10px">OA</span>' : '') + localBadge + '<br>' +
-            '<span class="hint">' + esc((it.abstract || '').slice(0, 90)) + '…</span></td>' +
-            '<td class="hint" style="font-size:11px">' + esc((it.authors || []).slice(0, 3).join(', ')) + '</td>' +
-            '<td class="hint" style="font-size:11px">' + esc(it.source || '') + '<br>' + (it.year || '—') + '</td>' +
-            '<td>' + (it.cited || 0) + '</td>' +
-            '<td>' + (link ? '<a href="' + link + '" target="_blank" rel="noopener" title="打开原文">↗</a>' : '—') + '</td>' +
-            '<td><span style="cursor:pointer;font-size:15px" onclick="toggleFav(\'' + dkey + '\',\'' + esc(it.title).replace(/'/g, "\\'") + '\',event)">' + (fav ? '⭐' : '☆') + '</span></td></tr>';
+          var doi = it.doi ? it.doi.replace('https://doi.org/', '') : '';
+          html += '<div class="lit-card">' +
+            '<div class="lit-title"><b>📄 ' + esc(it.title || '') + '</b>' +
+            (it.oa ? '<span class="tag tag-gold">OA 全文</span>' : '') + localBadge +
+            '<span class="fav" title="收藏" onclick="toggleFav(\'' + dkey + '\',\'' + esc(it.title).replace(/'/g, "\\'") + '\',event)">' + (fav ? '⭐' : '☆') + '</span></div>' +
+            (it.abstract ? '<div class="lit-abstract">' + esc((it.abstract || '').slice(0, 220)) + ((it.abstract || '').length > 220 ? '…' : '') + '</div>' : '') +
+            '<div class="lit-meta">' +
+            '<span class="authors">👤 ' + esc((it.authors || []).slice(0, 4).join(', ')) + ((it.authors || []).length > 4 ? ' 等' : '') + '</span>' +
+            '<span>📖 ' + esc(it.source || '') + '</span>' +
+            '<span>📅 ' + (it.year || '—') + '</span>' +
+            '<span>💬 被引 ' + (it.cited || 0) + '</span>' +
+            (link ? '<a class="link" href="' + link + '" target="_blank" rel="noopener">↗ 查看全文/DOI</a>' : '') +
+            '</div>' +
+            (doi ? '<div class="lit-doi">DOI: ' + esc(doi) + '</div>' : '') +
+            '</div>';
         });
-        html += '</tbody></table></div>';
+        html += '</div>';
       }
       html += '</div>';
     });
