@@ -180,7 +180,14 @@
       html += '<b>『' + mdInline(h.title) + '』</b><br>' + mdInline(h.content) + '<br><br>';
       html += '<span class="src-chip">来源</span> <b>' + esc(h.source) + '</b><br><br>';
     });
-    html += '<div class="src-ref">📎 以上内容来自华东师大统计学院课程讲义与高等教育出版社权威教材，回答可溯源。<br>💡 配置大模型 API Key 后可获得更深入的推导讲解与个性化答疑。</div>';
+    // 相关追问建议
+    var related = KB.search(question, 8).slice(hits.length, hits.length + 3);
+    if (related.length) {
+      html += '<div class="src-ref">💡 <b>延伸思考：</b>' + related.map(function (r) {
+        return '<span class="src-chip">' + esc(r.title) + '</span>';
+      }).join('') + '<br><span class="hint">点击上方问题可继续追问，或直接输入新问题。</span></div><br>';
+    }
+    html += '<div class="src-ref">📎 以上内容来自华东师大统计学院课程讲义、高等教育出版社权威教材及开放教材（OpenIntro / NIST），回答可溯源。<br>💡 配置大模型 API Key 后可获得更深入的推导讲解与个性化答疑。</div>';
     return html;
   }
 
@@ -755,8 +762,12 @@
     lln: { title: '大数定律', desc: '样本均值随 n 增大依概率收敛于总体均值 μ。' },
     ci: { title: '置信区间模拟', desc: '重复抽样并构造 95% 置信区间，观察覆盖率是否接近 95%。' },
     power: { title: '假设检验功效', desc: '调节效应量 d、样本量 n 与显著性水平 α，观察检验功效（1−β）与两类错误的变化。' },
-    normal: { title: '正态分布曲线', desc: '调节均值 μ 与标准差 σ，观察概率密度曲线形态。' },
-    reg: { title: '回归拟合演示', desc: '拖动数据点，观察最小二乘回归线的变化与残差。' }
+    normal: { title: '正态分布曲线', desc: '调节均值 μ 与标准差 σ，观察概率密度曲线形态与区间概率。' },
+    reg: { title: '回归拟合演示', desc: '拖动数据点，观察最小二乘回归线的变化与残差。' },
+    tdist: { title: 't 分布 vs 正态分布', desc: '自由度 df 越小，t 分布尾部越厚、中心越低——这是小样本用 t 分布而不用正态分布的原因。' },
+    chi2: { title: '卡方分布', desc: '自由度 k 决定 χ² 分布形态（偏态→近似正态），着色 α 尾部即拒绝域，用于卡方检验。' },
+    errors: { title: '两类错误模拟', desc: 'α 是第一类错误（误拒），β 是第二类错误（漏拒）。调节 α 与功效，观察决策矩阵四象限的变化。' },
+    pvalue: { title: 'P 值动画', desc: 'P 值 = H₀ 为真时出现"当前或更极端"观测的概率。移动观测值，观察绿色 P 值区域与红色拒绝域的关系。' }
   };
   var vizState = { current: 'clt', anim: null };
 
@@ -769,7 +780,7 @@
       var b = document.createElement('button');
       b.dataset.viz = k;
       b.className = k === vizState.current ? 'active' : '';
-      b.innerHTML = '<span class="vi">' + ({ clt: '🎲', lln: '📉', ci: '🎯', power: '⚡', normal: '🔔', reg: '📈' }[k]) + '</span>' + VIZ[k].title;
+      b.innerHTML = '<span class="vi">' + ({ clt: '🎲', lln: '📉', ci: '🎯', power: '⚡', normal: '🔔', reg: '📈', tdist: '🧪', chi2: '📊', errors: '⚖️', pvalue: '🔍' }[k]) + '</span>' + VIZ[k].title;
       b.onclick = function () { renderViz(k); };
       menu.appendChild(b);
     });
@@ -1297,6 +1308,359 @@
           canvas.onmousedown = canvas.onmousemove = canvas.onmouseup = null;
           canvas.ontouchstart = canvas.ontouchmove = canvas.ontouchend = null;
         };
+      },
+      /* ---- 新增：t 分布 vs 正态 ---- */
+      tdist: function () {
+        controls.innerHTML =
+          '<div class="param-row"><label>自由度 df</label><input type="range" id="vp-tdf" min="1" max="60" value="5"><output id="vp-tdfv">5</output></div>' +
+          '<div class="param-row"><label>显示尾部概率 α/2</label><input type="range" id="vp-tal" min="1" max="20" value="5"><output id="vp-talv">0.05</output></div>';
+        bindRange('vp-tdf', 'vp-tdfv');
+        bindRange('vp-tal', 'vp-talv', function (v) { return (v / 100).toFixed(2); });
+        function draw() {
+          var ctx = canvas.getContext('2d');
+          var w = canvas.width, h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+          var df = +$('vp-tdf').value;
+          var alpha = +$('vp-tal').value / 100;
+          var padL = 70, padB = 48, padT = 34;
+          var plotW = w - padL - 30, plotH = h - padB - padT;
+          var xLo = -5, xHi = 5;
+          var sx = function (v) { return padL + (v - xLo) / (xHi - xLo) * plotW; };
+          function normPdf(v) { return Math.exp(-v * v / 2) / Math.sqrt(2 * Math.PI); }
+          function tPdf(v, d) {
+            var g = Math.exp(S.gammaLn((d + 1) / 2) - S.gammaLn(d / 2));
+            return g / (Math.sqrt(d * Math.PI)) * Math.pow(1 + v * v / d, -(d + 1) / 2);
+          }
+          // 网格
+          ctx.strokeStyle = '#E8ECF1'; ctx.lineWidth = 1;
+          for (var g = 0; g <= 4; g++) {
+            var gy = padT + g / 4 * plotH;
+            ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + plotW, gy); ctx.stroke();
+          }
+          // t 分布尾部着色（右尾）
+          var tCritR = S.tInv(df, 1 - alpha / 2);
+          var tCritL = -tCritR;
+          var yMax = normPdf(0);
+          var sy = function (y) { return padT + plotH - y / (yMax * 1.12) * plotH; };
+          // 右尾区域
+          ctx.beginPath(); ctx.moveTo(sx(tCritR), sy(0));
+          for (var px = 0; px <= plotW; px += 2) {
+            var v = xLo + px / plotW * (xHi - xLo);
+            if (v < tCritR) continue;
+            ctx.lineTo(sx(v), sy(tPdf(v, df)));
+          }
+          ctx.lineTo(sx(xHi), sy(0)); ctx.closePath();
+          ctx.fillStyle = 'rgba(239,68,68,0.22)'; ctx.fill();
+          // 左尾区域
+          ctx.beginPath(); ctx.moveTo(sx(tCritL), sy(0));
+          for (var px2 = 0; px2 <= plotW; px2 += 2) {
+            var v2 = xLo + px2 / plotW * (xHi - xLo);
+            if (v2 > tCritL) continue;
+            ctx.lineTo(sx(v2), sy(tPdf(v2, df)));
+          }
+          ctx.lineTo(sx(xLo), sy(0)); ctx.closePath();
+          ctx.fillStyle = 'rgba(239,68,68,0.22)'; ctx.fill();
+          // 曲线：t（红粗）与正态（蓝灰细）
+          ctx.strokeStyle = '#1E3A5F'; ctx.lineWidth = 2.4; ctx.beginPath();
+          for (var px3 = 0; px3 <= plotW; px3 += 2) {
+            var v3 = xLo + px3 / plotW * (xHi - xLo);
+            if (px3 === 0) ctx.moveTo(sx(v3), sy(tPdf(v3, df))); else ctx.lineTo(sx(v3), sy(tPdf(v3, df)));
+          }
+          ctx.stroke();
+          ctx.strokeStyle = '#94A3B8'; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]); ctx.beginPath();
+          for (var px4 = 0; px4 <= plotW; px4 += 2) {
+            var v4 = xLo + px4 / plotW * (xHi - xLo);
+            if (px4 === 0) ctx.moveTo(sx(v4), sy(normPdf(v4))); else ctx.lineTo(sx(v4), sy(normPdf(v4)));
+          }
+          ctx.stroke(); ctx.setLineDash([]);
+          // 临界值标注
+          ctx.fillStyle = '#EF4444'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('−t*', sx(tCritL), sy(0) + 16);
+          ctx.fillText('t*', sx(tCritR), sy(0) + 16);
+          ctx.strokeStyle = 'rgba(239,68,68,0.5)'; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(sx(tCritR), padT); ctx.lineTo(sx(tCritR), padT + plotH); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(sx(tCritL), padT); ctx.lineTo(sx(tCritL), padT + plotH); ctx.stroke();
+          ctx.setLineDash([]);
+          // 图例与标题
+          ctx.textAlign = 'left';
+          ctx.font = '13px sans-serif'; ctx.fillStyle = '#1E3A5F';
+          ctx.fillText('t 分布（df=' + df + '）', padL + 10, 18);
+          ctx.fillStyle = '#94A3B8';
+          ctx.fillText('标准正态 N(0,1)', padL + 170, 18);
+          ctx.fillStyle = '#EF4444';
+          ctx.fillText('拒绝域 α=' + alpha.toFixed(2) + '（每尾 α/2）', padL + 340, 18);
+          // 结论
+          var tailDiff = (S.tCdf(tCritR, df) - 0.5) - (S.normCdf(tCritR) - 0.5);
+          ctx.font = '12px sans-serif'; ctx.fillStyle = '#44566C';
+          ctx.fillText('df 越小 → 尾部越厚、临界值 |t*| 越大：df=' + df + ' 时 t*=' + tCritR.toFixed(2) + '，正态 z*=' + S.normInv(1 - alpha / 2).toFixed(2), padL + 10, padT + plotH + 28);
+          // 坐标轴
+          ctx.strokeStyle = '#B0B7C3'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+          ctx.fillStyle = '#6B7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+          [-4, -2, 0, 2, 4].forEach(function (t) {
+            ctx.fillText(t, sx(t), padT + plotH + 16);
+          });
+        }
+        var timer = setInterval(draw, 60);
+        return function () { clearInterval(timer); };
+      },
+      /* ---- 新增：卡方分布 ---- */
+      chi2: function () {
+        controls.innerHTML =
+          '<div class="param-row"><label>自由度 k</label><input type="range" id="vp-cdf" min="1" max="20" value="4"><output id="vp-cdfv">4</output></div>' +
+          '<div class="param-row"><label>显著性水平 α</label><input type="range" id="vp-ca" min="1" max="20" value="5"><output id="vp-cav">0.05</output></div>';
+        bindRange('vp-cdf', 'vp-cdfv');
+        bindRange('vp-ca', 'vp-cav', function (v) { return (v / 100).toFixed(2); });
+        function chi2Pdf(x, k) {
+          if (x <= 0) return 0;
+          return Math.pow(x, k / 2 - 1) * Math.exp(-x / 2) / (Math.pow(2, k / 2) * Math.exp(S.gammaLn(k / 2)));
+        }
+        function draw() {
+          var ctx = canvas.getContext('2d');
+          var w = canvas.width, h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+          var k = +$('vp-cdf').value;
+          var alpha = +$('vp-ca').value / 100;
+          var padL = 70, padB = 48, padT = 34;
+          var plotW = w - padL - 30, plotH = h - padB - padT;
+          var xHi = Math.max(k + 5 * Math.sqrt(2 * k), 12);
+          var xLo = 0;
+          var sx = function (v) { return padL + (v - xLo) / (xHi - xLo) * plotW; };
+          // 峰值 y
+          var peak = chi2Pdf(Math.max(k - 2, 0.5), k);
+          var yMax = peak * 1.15;
+          var sy = function (y) { return padT + plotH - y / yMax * plotH; };
+          var crit = S.chi2Inv(k, 1 - alpha);
+          // 网格
+          ctx.strokeStyle = '#E8ECF1'; ctx.lineWidth = 1;
+          for (var g = 0; g <= 4; g++) {
+            var gy = padT + g / 4 * plotH;
+            ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + plotW, gy); ctx.stroke();
+          }
+          // 拒绝域着色
+          ctx.beginPath(); ctx.moveTo(sx(crit), sy(0));
+          for (var px = 0; px <= plotW; px += 2) {
+            var v = xLo + px / plotW * (xHi - xLo);
+            if (v < crit) continue;
+            ctx.lineTo(sx(v), sy(chi2Pdf(v, k)));
+          }
+          ctx.lineTo(sx(xHi), sy(0)); ctx.closePath();
+          ctx.fillStyle = 'rgba(239,68,68,0.24)'; ctx.fill();
+          // 曲线
+          ctx.strokeStyle = '#1E3A5F'; ctx.lineWidth = 2.6; ctx.beginPath();
+          for (var px2 = 0; px2 <= plotW; px2 += 2) {
+            var v2 = xLo + px2 / plotW * (xHi - xLo);
+            if (px2 === 0) ctx.moveTo(sx(v2), sy(chi2Pdf(v2, k))); else ctx.lineTo(sx(v2), sy(chi2Pdf(v2, k)));
+          }
+          ctx.stroke();
+          // 均值与临界值标注
+          ctx.fillStyle = '#1E3A5F'; ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('均值 k=' + k, sx(k), sy(0) + 20);
+          ctx.strokeStyle = 'rgba(30,58,95,0.4)'; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(sx(k), padT); ctx.lineTo(sx(k), padT + plotH); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#EF4444';
+          ctx.fillText('χ²临界值=' + crit.toFixed(2), sx(Math.min(crit + (xHi - xLo) * 0.06, xHi - (xHi - xLo) * 0.08)), padT + 16);
+          ctx.strokeStyle = 'rgba(239,68,68,0.55)';
+          ctx.beginPath(); ctx.moveTo(sx(crit), padT); ctx.lineTo(sx(crit), padT + plotH); ctx.stroke();
+          // 标题与结论
+          ctx.textAlign = 'left'; ctx.fillStyle = '#1E3A5F'; ctx.font = '13px sans-serif';
+          ctx.fillText('χ² 分布（df=' + k + '），拒绝域面积 = α = ' + alpha.toFixed(2), padL + 10, 18);
+          ctx.fillStyle = '#44566C'; ctx.font = '12px sans-serif';
+          ctx.fillText('k 越大分布越对称、越接近正态；期望 E=df=' + k + '，方差 Var=2df=' + (2 * k), padL + 10, padT + plotH + 28);
+          // 坐标轴
+          ctx.strokeStyle = '#B0B7C3'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+          ctx.fillStyle = '#6B7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+          [0, 5, 10, 15, 20].forEach(function (t) { if (t <= xHi) ctx.fillText(t, sx(t), padT + plotH + 16); });
+        }
+        var timer = setInterval(draw, 60);
+        return function () { clearInterval(timer); };
+      },
+      /* ---- 新增：两类错误模拟 ---- */
+      errors: function () {
+        controls.innerHTML =
+          '<div class="param-row"><label>显著性水平 α</label><input type="range" id="vp-ea" min="1" max="20" value="5"><output id="vp-eav">0.05</output></div>' +
+          '<div class="param-row"><label>H₀ 为真比例（先验）</label><input type="range" id="vp-eh" min="10" max="90" value="60"><output id="vp-ehv">60%</output></div>' +
+          '<div class="param-row"><label>功效 1−β</label><input type="range" id="vp-ep" min="20" max="99" value="80"><output id="vp-epv">0.80</output></div>' +
+          '<div class="param-row"><label>模拟次数</label><input type="range" id="vp-em" min="100" max="3000" value="1000"><output id="vp-emv">1000</output></div>';
+        bindRange('vp-ea', 'vp-eav', function (v) { return (v / 100).toFixed(2); });
+        bindRange('vp-eh', 'vp-ehv', function (v) { return v + '%'; });
+        bindRange('vp-ep', 'vp-epv', function (v) { return (v / 100).toFixed(2); });
+        bindRange('vp-em', 'vp-emv');
+        function draw() {
+          var ctx = canvas.getContext('2d');
+          var w = canvas.width, h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+          var alpha = +$('vp-ea').value / 100;
+          var pTrue = +$('vp-eh').value / 100;
+          var power = +$('vp-ep').value / 100;
+          var m = +$('vp-em').value;
+          var beta = 1 - power;
+          // 模拟
+          var tp = 0, fp = 0, tn = 0, fn = 0;
+          for (var i = 0; i < m; i++) {
+            var h0true = Math.random() < pTrue;
+            var rej = Math.random() < (h0true ? alpha : power);
+            if (h0true && rej) fp++;
+            else if (h0true && !rej) tn++;
+            else if (!h0true && rej) tp++;
+            else fn++;
+          }
+          var ox = 60, oy = 46;
+          var cw = (w - ox - 40) / 2, chh = (h - oy - 90) / 2;
+          function cell(x, y, label, count, pct, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, cw, chh);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, cw, chh);
+            ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(label, x + cw / 2, y + chh / 2 - 12);
+            ctx.font = 'bold 21px sans-serif';
+            ctx.fillText(count.toLocaleString(), x + cw / 2, y + chh / 2 + 16);
+            ctx.font = '12px sans-serif';
+            ctx.fillText('(' + (pct * 100).toFixed(1) + '%)', x + cw / 2, y + chh / 2 + 36);
+          }
+          // 四象限
+          cell(ox, oy, '✅ 正确拒绝（功效）', tp, tp / m, 'rgba(16,185,129,0.75)');
+          cell(ox + cw, oy, '❌ 第一类错误（α）', fp, fp / m, 'rgba(239,68,68,0.78)');
+          cell(ox, oy + chh, '✅ 正确接受（1−α）', tn, tn / m, 'rgba(58,107,158,0.72)');
+          cell(ox + cw, oy + chh, '❌ 第二类错误（β）', fn, fn / m, 'rgba(245,158,11,0.82)');
+          // 行列标签
+          ctx.fillStyle = '#1E3A5F'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('拒绝 H₀', ox + cw / 2, oy - 14);
+          ctx.fillText('不拒绝 H₀', ox + cw + cw / 2, oy - 14);
+          ctx.save(); ctx.translate(14, oy + chh / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('H₀ 为真', 0, 0); ctx.restore();
+          ctx.save(); ctx.translate(14, oy + chh + chh / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('H₀ 为假', 0, 0); ctx.restore();
+          // 底部结论
+          ctx.textAlign = 'left'; ctx.font = '12.5px sans-serif'; ctx.fillStyle = '#44566C';
+          ctx.fillText('模拟 ' + m + ' 次：第一类错误率 ' + (fp / m * 100).toFixed(1) + '%（理论 α=' + alpha.toFixed(2) + '），第二类错误率 ' + (fn / m * 100).toFixed(1) + '%（理论 β=' + beta.toFixed(2) + '），经验功效 ' + (tp / (m * (1 - pTrue)) * 100).toFixed(1) + '%（理论 ' + (power * 100).toFixed(0) + '%）', 20, h - 26);
+          ctx.fillStyle = '#C9B037'; ctx.font = '13px sans-serif';
+          ctx.fillText('α 由显著性水平控制，β 由样本量/效应量决定；增大样本量可同时降低两类错误', 20, h - 46);
+        }
+        var timer = setInterval(draw, 120);
+        return function () { clearInterval(timer); };
+      },
+      /* ---- 新增：P 值动画 ---- */
+      pvalue: function () {
+        controls.innerHTML =
+          '<div class="param-row"><label>观测 z 值</label><input type="range" id="vp-pz" min="-4" max="4" step="0.05" value="1.8"><output id="vp-pzv">1.80</output></div>' +
+          '<div class="param-row"><label>显著性水平 α</label><input type="range" id="vp-pa2" min="1" max="15" value="5"><output id="vp-pa2v">0.05</output></div>' +
+          '<div class="param-row"><label>检验方向</label><select id="vp-ptail"><option value="two">双侧检验</option><option value="right">右侧检验</option><option value="left">左侧检验</option></select></div>';
+        bindRange('vp-pz', 'vp-pzv', function (v) { return (+v).toFixed(2); });
+        bindRange('vp-pa2', 'vp-pa2v', function (v) { return (v / 100).toFixed(2); });
+        function draw() {
+          var ctx = canvas.getContext('2d');
+          var w = canvas.width, h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+          var z = +$('vp-pz').value;
+          var alpha = +$('vp-pa2').value / 100;
+          var tail = $('vp-ptail').value;
+          var padL = 70, padB = 52, padT = 34;
+          var plotW = w - padL - 30, plotH = h - padB - padT;
+          var xLo = -4.4, xHi = 4.4;
+          var sx = function (v) { return padL + (v - xLo) / (xHi - xLo) * plotW; };
+          var yMax = 0.45;
+          var sy = function (y) { return padT + plotH - y / yMax * plotH; };
+          function pdf(v) { return Math.exp(-v * v / 2) / Math.sqrt(2 * Math.PI); }
+          // P 值区域（绿色）
+          ctx.beginPath();
+          if (tail === 'two') {
+            ctx.moveTo(sx(z), sy(0));
+            for (var px = 0; px <= plotW; px += 2) {
+              var v = xLo + px / plotW * (xHi - xLo);
+              if (v < z && v > -z) continue;
+              ctx.lineTo(sx(v), sy(pdf(v)));
+            }
+            ctx.lineTo(sx(xHi), sy(0)); ctx.closePath();
+            ctx.moveTo(sx(-z), sy(0));
+            for (var px2 = 0; px2 <= plotW; px2 += 2) {
+              var v2 = xLo + px2 / plotW * (xHi - xLo);
+              if (v2 > -z) continue;
+              ctx.lineTo(sx(v2), sy(pdf(v2)));
+            }
+            ctx.lineTo(sx(xLo), sy(0)); ctx.closePath();
+          } else if (tail === 'right') {
+            ctx.moveTo(sx(z), sy(0));
+            for (var px3 = 0; px3 <= plotW; px3 += 2) {
+              var v3 = xLo + px3 / plotW * (xHi - xLo);
+              if (v3 < z) continue;
+              ctx.lineTo(sx(v3), sy(pdf(v3)));
+            }
+            ctx.lineTo(sx(xHi), sy(0)); ctx.closePath();
+          } else {
+            ctx.moveTo(sx(z), sy(0));
+            for (var px4 = 0; px4 <= plotW; px4 += 2) {
+              var v4 = xLo + px4 / plotW * (xHi - xLo);
+              if (v4 > z) continue;
+              ctx.lineTo(sx(v4), sy(pdf(v4)));
+            }
+            ctx.lineTo(sx(xLo), sy(0)); ctx.closePath();
+          }
+          ctx.fillStyle = 'rgba(16,185,129,0.35)'; ctx.fill();
+          // 拒绝域（红色边界）
+          var zCrit;
+          if (tail === 'two') {
+            zCrit = S.normInv(1 - alpha / 2);
+            ctx.strokeStyle = 'rgba(239,68,68,0.75)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.6;
+            ctx.beginPath(); ctx.moveTo(sx(zCrit), padT); ctx.lineTo(sx(zCrit), padT + plotH); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(sx(-zCrit), padT); ctx.lineTo(sx(-zCrit), padT + plotH); ctx.stroke();
+            ctx.setLineDash([]);
+          } else if (tail === 'right') {
+            zCrit = S.normInv(1 - alpha);
+            ctx.strokeStyle = 'rgba(239,68,68,0.75)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.6;
+            ctx.beginPath(); ctx.moveTo(sx(zCrit), padT); ctx.lineTo(sx(zCrit), padT + plotH); ctx.stroke();
+            ctx.setLineDash([]);
+          } else {
+            zCrit = S.normInv(alpha);
+            ctx.strokeStyle = 'rgba(239,68,68,0.75)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.6;
+            ctx.beginPath(); ctx.moveTo(sx(zCrit), padT); ctx.lineTo(sx(zCrit), padT + plotH); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          // 正态曲线
+          ctx.strokeStyle = '#1E3A5F'; ctx.lineWidth = 2.4; ctx.beginPath();
+          for (var px5 = 0; px5 <= plotW; px5 += 2) {
+            var v5 = xLo + px5 / plotW * (xHi - xLo);
+            if (px5 === 0) ctx.moveTo(sx(v5), sy(pdf(v5))); else ctx.lineTo(sx(v5), sy(pdf(v5)));
+          }
+          ctx.stroke();
+          // 观测值标记
+          var obsY = sy(pdf(z));
+          ctx.fillStyle = '#EF4444';
+          ctx.beginPath(); ctx.arc(sx(z), obsY, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+          ctx.strokeStyle = 'rgba(239,68,68,0.6)'; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(sx(z), padT); ctx.lineTo(sx(z), padT + plotH); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#EF4444'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('z=' + z.toFixed(2), sx(z), padT + 14);
+          // P 值计算
+          var p;
+          if (tail === 'two') p = 2 * (1 - S.normCdf(Math.abs(z)));
+          else if (tail === 'right') p = 1 - S.normCdf(z);
+          else p = S.normCdf(z);
+          var reject = p <= alpha;
+          // 标题与结论
+          ctx.textAlign = 'left'; ctx.fillStyle = '#1E3A5F'; ctx.font = 'bold 13px sans-serif';
+          ctx.fillText('标准正态分布下的假设检验（H₀: μ=μ₀）', padL + 10, 18);
+          ctx.font = '12.5px sans-serif';
+          ctx.fillStyle = '#10B981';
+          ctx.fillText('绿色面积 = P 值 = ' + p.toFixed(4), padL + 10, 33);
+          ctx.fillStyle = '#44566C';
+          ctx.fillText('红色虚线 = 拒绝域边界（α=' + alpha.toFixed(2) + '）', padL + 230, 33);
+          ctx.fillStyle = reject ? '#EF4444' : '#10B981';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText(reject ? '✗ P ≤ α → 拒绝 H₀（差异显著）' : '✓ P > α → 不拒绝 H₀（证据不足）', padL + 10, padT + plotH + 30);
+          // 坐标轴
+          ctx.strokeStyle = '#B0B7C3'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
+          ctx.fillStyle = '#6B7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+          [-4, -2, 0, 2, 4].forEach(function (t) { ctx.fillText(t, sx(t), padT + plotH + 16); });
+        }
+        var timer = setInterval(draw, 60);
+        return function () { clearInterval(timer); };
       }
     };
 
