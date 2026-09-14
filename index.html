@@ -66,21 +66,14 @@ a:hover{text-decoration:underline}
 .nav-tabs button:hover{background:var(--bg-soft);color:var(--primary)}
 .nav-tabs button.active{background:var(--primary);color:#fff;font-weight:600}
 .ver-badge{
-  margin-left:12px;flex-shrink:0;display:flex;align-items:center;gap:8px;
-  padding:5px 14px 5px 7px;border-radius:24px;cursor:default;user-select:none;
+  margin-left:12px;flex-shrink:0;display:flex;align-items:center;gap:7px;
+  padding:5px 14px;border-radius:24px;cursor:default;user-select:none;
   background:linear-gradient(135deg,#1E3A5F,#2d5484);
   border:1.5px solid var(--accent);color:#fff;
   box-shadow:0 2px 12px rgba(201,176,55,.35), inset 0 0 14px rgba(201,176,55,.12);
   animation:verGlow 3.2s ease-in-out infinite;
 }
 @keyframes verGlow{0%,100%{box-shadow:0 2px 12px rgba(201,176,55,.3), inset 0 0 14px rgba(201,176,55,.1)}50%{box-shadow:0 2px 18px rgba(201,176,55,.55), inset 0 0 20px rgba(201,176,55,.22)}}
-.ver-badge .vb-ico{
-  width:24px;height:24px;border-radius:50%;flex-shrink:0;
-  background:var(--accent);color:#2b2400;display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:13px;font-family:Georgia,serif;
-  box-shadow:0 0 8px rgba(201,176,55,.6);
-}
-.ver-badge .vb-body{display:flex;align-items:baseline;gap:6px;line-height:1}
 .ver-badge .vb-t{font-weight:800;font-size:14px;letter-spacing:.5px;color:var(--accent)}
 .ver-badge .vb-s{font-size:10px;color:#B8C4D4;padding-left:6px;border-left:1px solid rgba(255,255,255,.25)}
 
@@ -418,8 +411,7 @@ table.grid td.cat{color:var(--primary-2)}
       <button data-p="about" onclick="go('about')">关于</button>
     </nav>
     <span class="ver-badge" title="当前版本：V1.0（内测版）">
-      <span class="vb-ico">Σ</span>
-      <span class="vb-body"><span class="vb-t">V1.0</span><span class="vb-s">内测版</span></span>
+      <span class="vb-t">V1.0</span><span class="vb-s">内测版</span>
     </span>
   </div>
 </header>
