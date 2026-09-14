@@ -150,26 +150,22 @@ main{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
 }
 .hero h1{font-size:32px;font-weight:800;letter-spacing:1px;margin-bottom:8px}
 .hero h1 em{font-style:normal;color:var(--accent)}
-.hero p{max-width:700px;color:rgba(255,255,255,.9);font-size:15.5px;line-height:2;margin-bottom:16px}
-.hero-cta{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.hero-cta .hc-text{
-  font-size:23px;font-weight:800;color:var(--accent);letter-spacing:2px;
-  padding-bottom:6px;border-bottom:3px solid var(--accent);
-  text-shadow:0 2px 10px rgba(201,176,55,.45);
-  animation:hcUnderline 2.4s ease-in-out infinite;
-}
-@keyframes hcUnderline{0%,100%{border-bottom-color:var(--accent);transform:translateY(0)}50%{border-bottom-color:#F2E3AC;transform:translateY(-2px)}}
-.hero-cta .hc-arrow{font-size:24px;animation:hcBounce 1.6s ease-in-out infinite}
-@keyframes hcBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;position:relative;z-index:5}
-.hero-actions .btn,.hero-metrics{position:relative;z-index:5}
+.hero p{max-width:760px;color:rgba(255,255,255,.92);font-size:16.5px;line-height:2;margin-bottom:18px}
+
+
+50%{border-bottom-color:#F2E3AC;transform:translateY(-2px)}}
+
+50%{transform:translateY(6px)}}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;position:relative;z-index:5}
+.hero-actions .btn{padding:12px 22px;font-size:15.5px}
+.hero-actions .btn,
 .hero .btn-gold{background:var(--accent);color:#2b2400}
 .hero .btn-ghost-w{border:1px solid rgba(255,255,255,.55);color:#fff;background:transparent}
 .hero .btn-ghost-w:hover{background:rgba(255,255,255,.12)}
 .hero-actions .btn-sm{padding:7px 14px;font-size:13px;font-weight:500;backdrop-filter:blur(4px)}
-.hero-metrics{display:flex;gap:34px;margin-top:26px;flex-wrap:wrap}
-.hero-metrics b{font-size:24px;display:block;color:var(--accent);font-family:var(--mono)}
-.hero-metrics span{font-size:12.5px;color:rgba(255,255,255,.7)}
+
+
+
 
 /* 三大能力卡片 */
 .cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:8px 0 24px}
@@ -422,15 +418,14 @@ table.grid td.cat{color:var(--primary-2)}
   <div class="hero">
     <span class="hero-kicker">华东师范大学统计学院 · 统计学科大模型建设项目</span>
     <h1>统计学学科大模型 <em>「数智统计」</em></h1>
-    <p>面向统计学与数据科学专业的 AI+ 教学平台。以统计学科专属知识库为底座，让抽象定理看得见、让复杂数据算得清、让课堂设计信手拈来。</p>
-    <div class="hero-cta"><span class="hc-text">开始探索吧</span><span class="hc-arrow">👇</span></div>
+    <p>面向统计学与数据科学专业的 AI+ 教学平台。</p>
     <div class="hero-actions">
-      <button class="btn btn-gold btn-sm" onclick="go('chat')">💬 知识问答</button>
-      <button class="btn btn-ghost-w btn-sm" onclick="go('data')">📊 数据分析Agent</button>
-      <button class="btn btn-ghost-w btn-sm" onclick="go('library')">📚 资源库</button>
-      <button class="btn btn-ghost-w btn-sm" onclick="go('litsearch')">🔍 文献检索</button>
-      <button class="btn btn-ghost-w btn-sm" onclick="go('distill')">🧪 知识蒸馏</button>
-      <button class="btn btn-ghost-w btn-sm" onclick="go('lesson')">📝 教案工坊</button>
+      <button class="btn btn-gold" onclick="go('chat')">💬 知识问答</button>
+      <button class="btn btn-ghost-w" onclick="go('data')">📊 数据分析Agent</button>
+      <button class="btn btn-ghost-w" onclick="go('library')">📚 资源库</button>
+      <button class="btn btn-ghost-w" onclick="go('litsearch')">🔍 文献检索</button>
+      <button class="btn btn-ghost-w" onclick="go('distill')">🧪 知识蒸馏</button>
+      <button class="btn btn-ghost-w" onclick="go('lesson')">📝 教案工坊</button>
     </div>
     <div class="ai-logo-wrap">
       <svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" aria-label="统计学与AI融合标志">
@@ -487,15 +482,7 @@ table.grid td.cat{color:var(--primary-2)}
         </g>
       </svg>
     </div>
-    <div class="hero-metrics">
-      <div><b>∞</b><span>核心课程持续拓展</span></div>
-      <div><b>2</b><span>国家级一流课程</span></div>
-      <div><b>100+</b><span>并发用户支持</span></div>
-      <div><b>100%</b><span>回答可溯源</span></div>
-    </div>
-  </div>
-
-  <div class="section-title">核心功能</div>
+</div><div class="section-title">核心功能</div>
   <div class="gold-bar"></div>
   <div class="cap-grid">
     <div class="cap-card" onclick="go('chat')">
@@ -827,10 +814,6 @@ table.grid td.cat{color:var(--primary-2)}
     <p style="font-size:14px;color:var(--ink2);line-height:2;margin-top:6px">
       我们非常欢迎各位老师、同学提出使用建议与改进意见。如有任何想法，欢迎发送邮件至开发者邮箱：<a href="mailto:Haiyanzhu_s_mail@163.com" style="color:var(--primary-2);font-weight:600;text-decoration:underline">Haiyanzhu_s_mail@163.com</a>
     </p>
-  </div>
-  <div class="card">
-    <h3>🧭 学科前沿 · AI 时代统计学（JASA 2026）</h3>
-    <div id="frontier-list"></div>
   </div>
 </section>
 </main>
