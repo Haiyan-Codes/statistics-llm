@@ -71,7 +71,7 @@
       apiKey: '',
       model: 'deepseek-chat',
       baseUrl: 'https://api.deepseek.com',
-      workerUrl: 'http://localhost:8787'
+      workerUrl: 'https://statllm.mentalhealthresearch.top'
     };
   }
   function getChatConfig() {
