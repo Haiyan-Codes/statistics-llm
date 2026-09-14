@@ -467,8 +467,8 @@
     switchDataTab('overview');
     renderOverview();
     renderQuality();
-    // 自动触发一次分析
-    runAutoAnalyze();
+    // 自动分析但不抢切 tab（保持数据概览可见）
+    runAutoAnalyze(true);
   }
 
   window.switchDataTab = function (tab) {
@@ -805,7 +805,7 @@
     URL.revokeObjectURL(a.href);
   };
 
-  window.runAutoAnalyze = function () {
+  window.runAutoAnalyze = function (keepTab) {
     if (!currentData) { alert('请先上传数据或加载示例数据'); return; }
     var btn = event && event.target;
     if (btn) { btn.textContent = '⏳ 分析中…'; btn.disabled = true; }
@@ -815,7 +815,8 @@
       renderCharts();
       renderReport();
       if (btn) { btn.textContent = '▶ 一键全量分析'; btn.disabled = false; }
-      switchDataTab('report');
+      // keepTab=true（示例数据自动分析）时不切换 tab，保持当前视图
+      if (!keepTab) switchDataTab('report');
     }, 80);
   };
 
