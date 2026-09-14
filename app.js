@@ -292,13 +292,13 @@
     return hits.slice(0, topN).map(function (h) { return { it: h.it, dir: h.dir }; });
   }
 
-  /* 文献引用 HTML（带下载链接） */
+  /* 文献引用 HTML（链接指向 OA 原文/DOI） */
   function litRefHtml(litHits) {
     if (!litHits || !litHits.length) return '';
     var html = '<div class="src-ref">🔗 <b>相关学术文献：</b><br>';
     litHits.forEach(function (h) {
       var it = h.it;
-      var link = it.local_pdf ? (GIT_BASE + 'literature/' + h.dir + '/pdf/' + encodeURIComponent(it.local_pdf)) : (it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : ''));
+      var link = it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : '');
       var title = esc((it.title || '').slice(0, 46)) + ((it.title || '').length > 46 ? '…' : '');
       html += '• ' + (link ? '<a href="' + link + '" target="_blank" rel="noopener">' + title + '</a>' : title) +
         ' <span class="hint">(' + esc(it.source || '') + ', ' + (it.year || '—') + ')</span><br>';
@@ -1889,15 +1889,17 @@
       if (lits.length) {
         html += '<div class="table-scroll" style="max-height:340px"><table class="grid"><thead><tr><th>文献</th><th>作者</th><th>来源/年份</th><th>被引</th><th></th><th></th></tr></thead><tbody>';
         lits.slice(0, 40).forEach(function (it) {
-          var link = it.local_pdf ? (GIT_BASE + 'literature/' + dkey + '/pdf/' + encodeURIComponent(it.local_pdf)) : (it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : ''));
+          // 链接优先用原始 OA 全文/DOI（文献 PDF 未上传 GitHub，本地存档仅作徽章）
+          var link = it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : '');
+          var localBadge = it.local_pdf ? ' <span class="tag" title="课程组资料硬盘已存全文">📦 本地已存</span>' : '';
           var fav = isFav(dkey, it.title);
           html += '<tr><td style="text-align:left"><b>' + esc(it.title || '') + '</b>' +
-            (it.oa ? ' <span class="tag-gold" style="padding:0 6px;font-size:10px">OA</span>' : '') + '<br>' +
+            (it.oa ? ' <span class="tag-gold" style="padding:0 6px;font-size:10px">OA</span>' : '') + localBadge + '<br>' +
             '<span class="hint">' + esc((it.abstract || '').slice(0, 90)) + '…</span></td>' +
             '<td class="hint" style="font-size:11px">' + esc((it.authors || []).slice(0, 3).join(', ')) + '</td>' +
             '<td class="hint" style="font-size:11px">' + esc(it.source || '') + '<br>' + (it.year || '—') + '</td>' +
             '<td>' + (it.cited || 0) + '</td>' +
-            '<td>' + (link ? '<a href="' + link + '" target="_blank" rel="noopener">↗</a>' : '—') + '</td>' +
+            '<td>' + (link ? '<a href="' + link + '" target="_blank" rel="noopener" title="打开原文">↗</a>' : '—') + '</td>' +
             '<td><span style="cursor:pointer;font-size:15px" onclick="toggleFav(\'' + dkey + '\',\'' + esc(it.title).replace(/'/g, "\\'") + '\',event)">' + (fav ? '⭐' : '☆') + '</span></td></tr>';
         });
         html += '</tbody></table></div>';
