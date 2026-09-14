@@ -1772,7 +1772,9 @@
    * ========================================================== */
   function renderAbout() {
     // 知识库来源
-    $('about-sources').innerHTML = KB.meta.sources.map(function (s) {
+    // 知识库来源（关于页已精简，保留 null 保护）
+    var srcEl = $('about-sources');
+    if (srcEl) srcEl.innerHTML = KB.meta.sources.map(function (s) {
       return '<span class="tag">' + esc(s) + '</span>';
     }).join('');
     // 前沿观点
