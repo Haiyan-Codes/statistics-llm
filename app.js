@@ -1890,7 +1890,7 @@
     var dirs = key ? DIR_ORDER.filter(function (p) { return p[0] === key; }) : DIR_ORDER;
     var q = ($('lib-search') && $('lib-search').value || '').trim().toLowerCase();
     var sortBy = $('lib-sort') ? $('lib-sort').value : 'default';
-    var shown = 0;    var showTb = (libType === 'all' || libType === 'textbook' || libType === 'notes');
+    var shown = 0;    var showTb = (libType === 'all' || libType === 'textbook');
     var showLit = (libType === 'all' || libType === 'literature');
     if (showTb || showLit) dirs.forEach(function (pair) {
       var dkey = pair[0], cn = pair[1];
@@ -1907,14 +1907,8 @@
       }
       if (sortBy === 'year') lits.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
       else if (sortBy === 'cited') lits.sort(function (a, b) { return (b.cited || 0) - (a.cited || 0); });
-      // 讲义分类：文件名含 MIT/Online/Notes/State/NIST 的视为讲义
-      var isNotes = libType === 'notes';
       var filteredTb = tbs.filter(function (b) {
-        var t = (b.title + '').toLowerCase();
-        var notesLike = /mit|online|notes|state|讲义/i.test(t);
-        var okType = isNotes ? notesLike : (!isNotes || true);
-        var okQ = !q || t.indexOf(q) >= 0;
-        return okType && okQ;
+        return !q || (b.title + '').toLowerCase().indexOf(q) >= 0;
       });
       if (!showTb) filteredTb = [];
       if (!showLit) lits = [];
@@ -1931,9 +1925,6 @@
             '<a class="btn btn-soft btn-sm" href="' + url + '" target="_blank" rel="noopener">⬇ 下载</a></div>';
         });
         html += '</div>';
-      }
-      if (isNotes && filteredTb.length) {
-        html += '<div class="hint" style="margin:0 0 8px">🗂️ 讲义/课件类资料（课程讲义、开放讲义陆续整理中）</div>';
       }
       if (lits.length) {
         html += '<div class="lit-list">';
@@ -1978,9 +1969,9 @@
           }).join('') + '</div></div>';
       }
     }
-    if (libType === 'all' || libType === 'ppt' || libType === 'video' || libType === 'quiz') {
+    if (libType === 'all' || libType === 'notes' || libType === 'ppt' || libType === 'video' || libType === 'quiz') {
       var ph = RES.placeholders || {};
-      var phOrder = [['ppt', '📊 课程教学课件（PPT）', '对应申报数据集"PPT课件83个（477.15MB）"，正在按课程方向整理开放课件并陆续收录'], ['video', '🎬 配套教学视频', '对应申报数据集"音视频626个（200.75GB）"，公开课与配套视频陆续收录中'], ['quiz', '📝 教学题目与题库', '对应申报数据集"试题库"，习题、解析与案例数据陆续录入中']];
+      var phOrder = [['notes', '🗂️ 课程讲义与课件', '对应申报数据集"课程讲义、课件等自有教学资源"，正在整理录入，陆续上线'], ['ppt', '📊 课程教学课件（PPT）', '对应申报数据集"PPT课件83个（477.15MB）"，正在按课程方向整理开放课件并陆续收录'], ['video', '🎬 配套教学视频', '对应申报数据集"音视频626个（200.75GB）"，公开课与配套视频陆续收录中'], ['quiz', '📝 教学题目与题库', '对应申报数据集"试题库"，习题、解析与案例数据陆续录入中']];
       phOrder.forEach(function (p) {
         if (libType !== 'all' && libType !== p[0]) return;
         html += '<div class="card"><h3>' + p[1] + '</h3>' +
