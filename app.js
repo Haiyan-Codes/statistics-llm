@@ -1890,7 +1890,9 @@
     var dirs = key ? DIR_ORDER.filter(function (p) { return p[0] === key; }) : DIR_ORDER;
     var q = ($('lib-search') && $('lib-search').value || '').trim().toLowerCase();
     var sortBy = $('lib-sort') ? $('lib-sort').value : 'default';
-    var shown = 0;    dirs.forEach(function (pair) {
+    var shown = 0;    var showTb = (libType === 'all' || libType === 'textbook' || libType === 'notes');
+    var showLit = (libType === 'all' || libType === 'literature');
+    if (showTb || showLit) dirs.forEach(function (pair) {
       var dkey = pair[0], cn = pair[1];
       var tbs = RES.textbooks[dkey] || [];
       var lits = RES.literature[dkey] ? RES.literature[dkey].items.slice() : [];
@@ -1905,7 +1907,17 @@
       }
       if (sortBy === 'year') lits.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
       else if (sortBy === 'cited') lits.sort(function (a, b) { return (b.cited || 0) - (a.cited || 0); });
-      var filteredTb = tbs.filter(function (b) { return !q || (b.title + '').toLowerCase().indexOf(q) >= 0; });
+      // 讲义分类：文件名含 MIT/Online/Notes/State/NIST 的视为讲义
+      var isNotes = libType === 'notes';
+      var filteredTb = tbs.filter(function (b) {
+        var t = (b.title + '').toLowerCase();
+        var notesLike = /mit|online|notes|state|讲义/i.test(t);
+        var okType = isNotes ? notesLike : (!isNotes || true);
+        var okQ = !q || t.indexOf(q) >= 0;
+        return okType && okQ;
+      });
+      if (!showTb) filteredTb = [];
+      if (!showLit) lits = [];
       if (!filteredTb.length && !lits.length) return;
       shown += lits.length;
       html += '<div class="card"><h3>📖 ' + cn + '（教材 ' + filteredTb.length + ' 本 · 文献 ' + lits.length + ' 篇）</h3>';
@@ -1919,6 +1931,9 @@
             '<a class="btn btn-soft btn-sm" href="' + url + '" target="_blank" rel="noopener">⬇ 下载</a></div>';
         });
         html += '</div>';
+      }
+      if (isNotes && filteredTb.length) {
+        html += '<div class="hint" style="margin:0 0 8px">🗂️ 讲义/课件类资料（课程讲义、开放讲义陆续整理中）</div>';
       }
       if (lits.length) {
         html += '<div class="lit-list">';
