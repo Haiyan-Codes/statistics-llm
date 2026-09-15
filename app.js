@@ -1842,8 +1842,8 @@
     if (ds) ds.textContent = (RES.dataset_sources || []).length;
     // tabs
     var tabs = $('lib-tabs');
-    tabs.innerHTML = '<button class="active" onclick="libTab(null,this)">全部</button>' + DIR_ORDER.map(function (p) {
-      return '<button onclick="libTab(\'' + p[0] + '\',this)">' + p[1] + '</button>';
+    tabs.innerHTML = '<button class="active" data-dir="" onclick="libTab(null,this)">全部</button>' + DIR_ORDER.map(function (p) {
+      return '<button data-dir="' + p[0] + '" onclick="libTab(\'' + p[0] + '\',this)">' + p[1] + '</button>';
     }).join('');
     renderLibContent(null);
   };
@@ -2483,6 +2483,17 @@
     initChatConfig();
     renderAbout();
     updateChatStatus();
+    // 事件委托：资源库类型 tab / 方向 tab / 数据页 tab 统一绑定（不依赖内联 onclick）
+    document.addEventListener('click', function (ev) {
+      var t = ev.target;
+      if (!t || !t.closest) return;
+      var typeBtn = t.closest('#lib-type-tabs button');
+      if (typeBtn) { window.libTypeTab(typeBtn.dataset.type, typeBtn); return; }
+      var dirBtn = t.closest('#lib-tabs button');
+      if (dirBtn) { window.libTab(dirBtn.dataset.dir || null, dirBtn); return; }
+      var dataBtn = t.closest('#data-result .data-tabs button[data-tab]');
+      if (dataBtn) { window.switchDataTab(dataBtn.dataset.tab); return; }
+    });
     // 默认欢迎消息
     setTimeout(function () {
       addMsg('ai', '<b>你好！我是「数智统计」答疑助手。</b><br><br>' +
