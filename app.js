@@ -1814,7 +1814,7 @@
   /* ==========================================================
    * 四、资源库（教材 + 文献分类展示）
    * ========================================================== */
-  var RES = window.STAT_RESOURCES || { textbooks: {}, literature: {} };
+  var RES = window.STAT_RESOURCES || { textbooks: {}, literature: {}, dataset_sources: [], placeholders: {} };
   var DIR_ORDER = [
     ['probability_and_statistics', '概率论与数理统计'],
     ['regression_analysis', '回归分析'],
@@ -1838,6 +1838,8 @@
     $('lib-tb-count').textContent = tbCount;
     $('lib-lit-count').textContent = litCount;
     $('lib-oa-count').textContent = oaCount;
+    var ds = $('lib-ds-count');
+    if (ds) ds.textContent = (RES.dataset_sources || []).length;
     // tabs
     var tabs = $('lib-tabs');
     tabs.innerHTML = '<button class="active" onclick="libTab(null,this)">全部</button>' + DIR_ORDER.map(function (p) {
@@ -1872,6 +1874,14 @@
     libFavOnly = !libFavOnly;
     $('lib-fav-btn').classList.toggle('btn-gold', libFavOnly);
     $('lib-fav-btn').classList.toggle('btn-ghost', !libFavOnly);
+    renderLibContent(null, true);
+  };
+
+  var libType = 'all';
+  window.libTypeTab = function (type, btn) {
+    libType = type;
+    document.querySelectorAll('#lib-type-tabs button').forEach(function (b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
     renderLibContent(null, true);
   };
 
@@ -1936,6 +1946,37 @@
       }
       html += '</div>';
     });
+    // ---- 类型分类渲染（数据集 / 课件 / 视频 / 题库）----
+    var ql = q || '';
+    if (libType === 'all' || libType === 'dataset') {
+      var dss = (RES.dataset_sources || []).filter(function (d) {
+        return !ql || ((d.name || '') + (d.desc || '') + (d.course || '')).toLowerCase().indexOf(ql) >= 0;
+      });
+      if (dss.length) {
+        html += '<div class="card"><h3>📈 公开统计数据集 / 数据源网站（' + dss.length + ' 个）</h3>' +
+          '<div class="lit-list">' + dss.map(function (d) {
+            return '<div class="lit-card"><div class="lit-title"><b>' + esc(d.name) + '</b></div>' +
+              '<div class="lit-abstract">' + esc(d.desc) + '</div>' +
+              '<div class="lit-meta"><span>🎯 教学用途：' + esc(d.course || '') + '</span>' +
+              '<span class="tag">' + esc((d.tags || []).join(' / ')) + '</span>' +
+              (d.url ? '<a class="link" href="' + d.url + '" target="_blank" rel="noopener">↗ 访问数据源</a>' : '') + '</div></div>';
+          }).join('') + '</div></div>';
+      }
+    }
+    if (libType === 'all' || libType === 'ppt' || libType === 'video' || libType === 'quiz') {
+      var ph = RES.placeholders || {};
+      var phOrder = [['ppt', '📊 课程教学课件（PPT）', '对应申报数据集"PPT课件83个（477.15MB）"，正在按课程方向整理开放课件并陆续收录'], ['video', '🎬 配套教学视频', '对应申报数据集"音视频626个（200.75GB）"，公开课与配套视频陆续收录中'], ['quiz', '📝 教学题目与题库', '对应申报数据集"试题库"，习题、解析与案例数据陆续录入中']];
+      phOrder.forEach(function (p) {
+        if (libType !== 'all' && libType !== p[0]) return;
+        html += '<div class="card"><h3>' + p[1] + '</h3>' +
+          '<div class="lit-list"><div class="lit-card" style="background:var(--bg-soft);border-style:dashed">' +
+          '<div class="lit-title"><b>⏳ 陆续添加中</b></div>' +
+          '<div class="lit-abstract">' + esc(p[2]) + '。本分类资源正由课程组整理上传，敬请期待。</div>' +
+          '<div class="lit-meta"><span class="tag tag-gold">建设中</span><span class="hint">资源收录进度将随数据建设同步更新</span></div>' +
+          '</div></div></div>';
+      });
+    }
+
     if (!html) html = '<div class="card"><p class="hint">没有匹配的资源，换个关键词试试～</p></div>';
     var info = $('lib-filter-info');
     if (info) info.textContent = (q ? '搜索「' + q + '」' : '') + (libFavOnly ? ' · 仅收藏' : '') + (shown ? ' · 共 ' + shown + ' 篇匹配' : '');
