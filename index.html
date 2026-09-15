@@ -817,6 +817,17 @@ table.grid td.cat{color:var(--primary-2)}
     </p>
   </div>
 </section>
+
+<!-- 知识体系图弹层 -->
+<div id="kb-tree-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(15,35,64,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)toggleKbTree()">
+  <div style="background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:80vh;overflow:auto;padding:22px 26px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:4px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleKbTree()">✕ 关闭</button>
+    </div>
+    <div id="kb-tree-body" style="font-size:13.5px"></div>
+  </div>
+</div>
+
 </main>
 
 <footer class="footer">
