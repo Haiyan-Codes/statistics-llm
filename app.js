@@ -181,6 +181,17 @@
         '建议：① 换个更聚焦的关键词（如"t 检验""置信区间""卡方检验"）；② 尝试下方推荐问题；③ 配置大模型 Key 后获得更开放的生成式答疑。';
     }
     var html = '<b>根据统计学科知识库检索，要点如下：</b><br><br>';
+    // 知识位置面包屑（用 positionOfQuery 兼容所有命中类型）
+    var pos = null;
+    var posInfo = KB.positionOfQuery(question);
+    if (posInfo) pos = posInfo.path;
+    if (pos && pos.length) {
+      html += '<div style="background:var(--bg-soft);border-radius:8px;padding:6px 10px;margin-bottom:10px;font-size:12.5px;color:var(--ink2)">📍 <b>知识位置</b>：' +
+        pos.map(function (n, i) {
+          return '<span style="color:' + (i === pos.length - 1 ? 'var(--accent);font-weight:700' : 'var(--primary-2)') + '">' + esc(n) + '</span>';
+        }).join('<span style="color:var(--muted);margin:0 4px">›</span>') +
+        ' <span class="hint" style="margin-left:8px">（点击右侧"知识体系图"查看全貌）</span></div>';
+    }
     // 第一个命中：完整讲解（含生动例子）；其余命中：标题引导追问
     hits.forEach(function (h, i) {
       if (i === 0) {
@@ -199,6 +210,9 @@
       }).join('') + '<br><span class="hint">点击上方问题可继续追问，或直接输入新问题。</span></div><br>';
     }
     html += '<div class="src-ref">📎 以上内容来自高等教育出版社权威教材、维基百科及开放教材（OpenIntro / NIST）等可溯源来源。<br>💡 配置大模型 API Key 后可获得更深入的推导讲解与个性化答疑。</div>';
+    if (pos && pos.length) {
+      html += '<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="toggleKbTree()">🗺️ 查看知识体系图</button></div>';
+    }
     return html;
   }
 
@@ -2359,6 +2373,48 @@
       alert('PPT 生成失败：' + e.message);
     }
   };
+
+
+  /* ---- 知识体系图弹层 ---- */
+  window.toggleKbTree = function () {
+    var overlay = $('kb-tree-overlay');
+    if (!overlay) return;
+    var show = overlay.style.display !== 'flex';
+    overlay.style.display = show ? 'flex' : 'none';
+    if (show) renderKbTree();
+  };
+  function renderKbTree() {
+    var box = $('kb-tree-body');
+    if (!box) return;
+    // 定位当前知识点
+    var current = null;
+    var lastMsg = document.querySelectorAll('#chat-msgs .msg.ai');
+    if (lastMsg.length) {
+      var txt = lastMsg[lastMsg.length - 1].textContent || '';
+      KB.entries.forEach(function (e) {
+        if (txt.indexOf(e.title) >= 0 && !current) current = e.id;
+      });
+    }
+    function nodeHtml(node, depth) {
+      var isCur = current && node.ids && node.ids.indexOf(current) >= 0;
+      var html = '<div style="margin-left:' + (depth * 18) + 'px;margin-top:5px;font-size:13.5px">';
+      if (node.children && node.children.length) {
+        html += '<div style="font-weight:700;color:var(--primary);padding:3px 0">📂 ' + esc(node.name) + '</div>';
+        node.children.forEach(function (c) { html += nodeHtml(c, depth + 1); });
+      } else {
+        var names = (node.ids || []).map(function (id) {
+          var e = KB.entries.find(function (x) { return x.id === id; });
+          return e ? e.title : null;
+        }).filter(Boolean);
+        html += '<div style="color:var(--ink2)">• ' + (isCur ? '<b style="color:var(--accent);background:var(--accent-soft);padding:1px 7px;border-radius:10px">' : '') +
+          esc(node.name) + (isCur ? ' ◀ 当前</b>' : '') + '</div>';
+        if (names.length && !isCur) html += '<div style="font-size:11.5px;color:var(--muted);margin-left:14px">' + names.join('、') + '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+    box.innerHTML = '<div style="font-weight:800;color:var(--primary);font-size:15px;margin-bottom:8px">🗺️ 统计学知识体系</div>' + nodeHtml(KB.tree, 0);
+  }
 
   /* ================= 初始化 ================= */
   document.addEventListener('DOMContentLoaded', function () {
