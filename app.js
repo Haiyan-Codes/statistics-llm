@@ -185,13 +185,7 @@
     var pos = null;
     var posInfo = KB.positionOfQuery(question);
     if (posInfo) pos = posInfo.path;
-    if (pos && pos.length) {
-      html += '<div style="background:var(--bg-soft);border-radius:8px;padding:6px 10px;margin-bottom:10px;font-size:12.5px;color:var(--ink2)">📍 <b>知识位置</b>：' +
-        pos.map(function (n, i) {
-          return '<span style="color:' + (i === pos.length - 1 ? 'var(--accent);font-weight:700' : 'var(--primary-2)') + '">' + esc(n) + '</span>';
-        }).join('<span style="color:var(--muted);margin:0 4px">›</span>') +
-        ' <span class="hint" style="margin-left:8px">（点击右侧"知识体系图"查看全貌）</span></div>';
-    }
+    html += kbPosHtml(pos);
     // 第一个命中：完整讲解（含生动例子）；其余命中：标题引导追问
     hits.forEach(function (h, i) {
       if (i === 0) {
@@ -210,9 +204,7 @@
       }).join('') + '<br><span class="hint">点击上方问题可继续追问，或直接输入新问题。</span></div><br>';
     }
     html += '<div class="src-ref">📎 以上内容来自高等教育出版社权威教材、维基百科及开放教材（OpenIntro / NIST）等可溯源来源。<br>💡 配置大模型 API Key 后可获得更深入的推导讲解与个性化答疑。</div>';
-    if (pos && pos.length) {
-      html += '<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="toggleKbTree()">🗺️ 查看知识体系图</button></div>';
-    }
+
     return html;
   }
 
@@ -306,6 +298,16 @@
     return hits.slice(0, topN).map(function (h) { return { it: h.it, dir: h.dir }; });
   }
 
+  /* 知识位置面包屑 + 体系图按钮 HTML */
+  function kbPosHtml(pos) {
+    if (!pos || !pos.length) return '';
+    var crumbs = pos.map(function (n, i) {
+      return '<span style="color:' + (i === pos.length - 1 ? 'var(--accent);font-weight:700' : 'var(--primary-2)') + '">' + esc(n) + '</span>';
+    }).join('<span style="color:var(--muted);margin:0 4px">›</span>');
+    return '<div style="background:var(--bg-soft);border-radius:8px;padding:6px 10px;margin-bottom:10px;font-size:12.5px;color:var(--ink2)">📍 <b>知识位置</b>：' + crumbs +
+      '</div><div style="margin-bottom:6px"><button class="btn btn-ghost btn-sm" onclick="toggleKbTree()">🗺️ 查看知识体系图</button></div>';
+  }
+
   /* 文献引用 HTML（链接指向 OA 原文/DOI） */
   function litRefHtml(litHits) {
     if (!litHits || !litHits.length) return '';
@@ -345,6 +347,9 @@
       }).join('\n\n');
     }
     var litRefsHtml = litRefHtml(litHits);
+    // 知识位置（LLM 路径同样展示）
+    var posInfo2 = KB.positionOfQuery(q);
+    var posHtml2 = kbPosHtml(posInfo2 ? posInfo2.path : null);
 
     var finalize = function (finalHtml, sources) {
       removeTyping();
@@ -397,7 +402,7 @@
               return '<span class="src-chip">' + esc(h.source) + '</span>';
             }).join('') + '</div>';
           }
-          bubbleEl.innerHTML = mdInline(full || acc) + srcHtml;
+          bubbleEl.innerHTML = posHtml2 + mdInline(full || acc) + srcHtml;
         }
         var box = $('chat-msgs'); box.scrollTop = box.scrollHeight;
       },
