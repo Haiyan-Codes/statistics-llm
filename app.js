@@ -57,7 +57,7 @@
     });
     window.scrollTo(0, 0);
     if (page === 'library') renderLibrary();
-    if (page === 'litsearch') setTimeout(function () { var el = $('lit-q'); if (el) el.focus(); }, 100);
+    if (page === 'litsearch') { setTimeout(function () { var el = $('lit-q'); if (el) el.focus(); }, 100); renderCollectedLit(); }
   };
 
   /* ==========================================================
@@ -1836,10 +1836,10 @@
       }
     });
     $('lib-tb-count').textContent = tbCount;
-    $('lib-lit-count').textContent = litCount;
-    $('lib-oa-count').textContent = oaCount;
     var ds = $('lib-ds-count');
     if (ds) ds.textContent = (RES.dataset_sources || []).length;
+    var li = $('lib-lit-count'); if (li) li.textContent = litCount;
+    var oa = $('lib-oa-count'); if (oa) oa.textContent = oaCount;
     // tabs
     var tabs = $('lib-tabs');
     tabs.innerHTML = '<button class="active" data-dir="" onclick="libTab(null,this)">全部</button>' + DIR_ORDER.map(function (p) {
@@ -1890,31 +1890,14 @@
     var dirs = key ? DIR_ORDER.filter(function (p) { return p[0] === key; }) : DIR_ORDER;
     var q = ($('lib-search') && $('lib-search').value || '').trim().toLowerCase();
     var sortBy = $('lib-sort') ? $('lib-sort').value : 'default';
-    var shown = 0;    var showTb = (libType === 'all' || libType === 'textbook');
-    var showLit = (libType === 'all' || libType === 'literature');
-    if (showTb || showLit) dirs.forEach(function (pair) {
+    var shown = 0;    if (libType === 'all' || libType === 'textbook') dirs.forEach(function (pair) {
       var dkey = pair[0], cn = pair[1];
       var tbs = RES.textbooks[dkey] || [];
-      var lits = RES.literature[dkey] ? RES.literature[dkey].items.slice() : [];
-      // 搜索过滤 + 收藏过滤 + 排序
-      if (q || libFavOnly) {
-        lits = lits.filter(function (it) {
-          var txt = ((it.title || '') + ' ' + (it.abstract || '') + ' ' + (it.source || '') + ' ' + (it.authors || []).join(' ')).toLowerCase();
-          var okText = !q || txt.indexOf(q) >= 0;
-          var okFav = !libFavOnly || isFav(dkey, it.title);
-          return okText && okFav;
-        });
-      }
-      if (sortBy === 'year') lits.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
-      else if (sortBy === 'cited') lits.sort(function (a, b) { return (b.cited || 0) - (a.cited || 0); });
       var filteredTb = tbs.filter(function (b) {
         return !q || (b.title + '').toLowerCase().indexOf(q) >= 0;
       });
-      if (!showTb) filteredTb = [];
-      if (!showLit) lits = [];
-      if (!filteredTb.length && !lits.length) return;
-      shown += lits.length;
-      html += '<div class="card"><h3>📖 ' + cn + '（教材 ' + filteredTb.length + ' 本 · 文献 ' + lits.length + ' 篇）</h3>';
+      if (!filteredTb.length) return;
+      html += '<div class="card"><h3>📖 ' + cn + '（教材 ' + filteredTb.length + ' 本）</h3>';
       if (filteredTb.length) {
         html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:14px">';
         filteredTb.forEach(function (b) {
@@ -1923,30 +1906,6 @@
             '<b style="color:var(--primary);font-size:13px">' + esc(b.title) + '</b>' +
             '<div class="hint" style="margin:6px 0">' + esc(b.source || '') + (b.size ? ' · ' + b.size : '') + '</div>' +
             '<a class="btn btn-soft btn-sm" href="' + url + '" target="_blank" rel="noopener">⬇ 下载</a></div>';
-        });
-        html += '</div>';
-      }
-      if (lits.length) {
-        html += '<div class="lit-list">';
-        lits.slice(0, 40).forEach(function (it) {
-          var link = it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : '');
-          var localBadge = it.local_pdf ? '<span class="tag" title="课程组资料硬盘已存全文">📦 本地已存</span>' : '';
-          var fav = isFav(dkey, it.title);
-          var doi = it.doi ? it.doi.replace('https://doi.org/', '') : '';
-          html += '<div class="lit-card">' +
-            '<div class="lit-title"><b>📄 ' + esc(it.title || '') + '</b>' +
-            (it.oa ? '<span class="tag tag-gold">OA 全文</span>' : '') + localBadge +
-            '<span class="fav" title="收藏" onclick="toggleFav(\'' + dkey + '\',\'' + esc(it.title).replace(/'/g, "\\'") + '\',event)">' + (fav ? '⭐' : '☆') + '</span></div>' +
-            (it.abstract ? '<div class="lit-abstract">' + esc((it.abstract || '').slice(0, 220)) + ((it.abstract || '').length > 220 ? '…' : '') + '</div>' : '') +
-            '<div class="lit-meta">' +
-            '<span class="authors">👤 ' + esc((it.authors || []).slice(0, 4).join(', ')) + ((it.authors || []).length > 4 ? ' 等' : '') + '</span>' +
-            '<span>📖 ' + esc(it.source || '') + '</span>' +
-            '<span>📅 ' + (it.year || '—') + '</span>' +
-            '<span>💬 被引 ' + (it.cited || 0) + '</span>' +
-            (link ? '<a class="link" href="' + link + '" target="_blank" rel="noopener">↗ 查看全文/DOI</a>' : '') +
-            '</div>' +
-            (doi ? '<div class="lit-doi">DOI: ' + esc(doi) + '</div>' : '') +
-            '</div>';
         });
         html += '</div>';
       }
@@ -2468,6 +2427,58 @@
     box.innerHTML = '<div style="font-weight:800;color:var(--primary);font-size:15px;margin-bottom:8px">🗺️ 统计学知识体系</div>' + nodeHtml(KB.tree, 0);
   }
 
+
+  /* ---- 已收录文献（文献收录与检索页下方）---- */
+  var colLitDir = null;
+  window.renderCollectedLit = function () {
+    var q = ($('col-lit-search') && $('col-lit-search').value || '').trim().toLowerCase();
+    var sortBy = $('col-lit-sort') ? $('col-lit-sort').value : 'default';
+    // tabs
+    var tabs = $('col-lit-tabs');
+    if (tabs && tabs.children.length === 0) {
+      tabs.innerHTML = '<button class="active" data-dir="" onclick="colLitDirTab(null,this)">全部</button>' + DIR_ORDER.map(function (p) {
+        return '<button data-dir="' + p[0] + '" onclick="colLitDirTab(\'' + p[0] + '\',this)">' + p[1] + '</button>';
+      }).join('');
+    }
+    var list = $('col-lit-list');
+    if (!list) return;
+    var html = '', total = 0;
+    DIR_ORDER.forEach(function (pair) {
+      var dkey = pair[0], cn = pair[1];
+      if (colLitDir && colLitDir !== dkey) return;
+      var items = RES.literature[dkey] ? RES.literature[dkey].items.slice() : [];
+      if (q) items = items.filter(function (it) {
+        var txt = ((it.title || '') + ' ' + (it.abstract || '') + ' ' + (it.source || '') + ' ' + (it.authors || []).join(' ')).toLowerCase();
+        return txt.indexOf(q) >= 0;
+      });
+      if (sortBy === 'year') items.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
+      else if (sortBy === 'cited') items.sort(function (a, b) { return (b.cited || 0) - (a.cited || 0); });
+      if (!items.length) return;
+      total += items.length;
+      html += '<div class="card"><h3>📖 ' + cn + '（' + items.length + ' 篇）</h3><div class="lit-list">';
+      items.slice(0, 25).forEach(function (it) {
+        var link = it.pdf_url || (it.doi ? 'https://doi.org/' + it.doi.replace('https://doi.org/', '') : '');
+        var localBadge = it.local_pdf ? '<span class="tag" title="课程组资料硬盘已存全文">📦 本地已存</span>' : '';
+        var doi = it.doi ? it.doi.replace('https://doi.org/', '') : '';
+        html += '<div class="lit-card"><div class="lit-title"><b>📄 ' + esc(it.title || '') + '</b>' +
+          (it.oa ? '<span class="tag tag-gold">OA 全文</span>' : '') + localBadge + '</div>' +
+          (it.abstract ? '<div class="lit-abstract">' + esc((it.abstract || '').slice(0, 200)) + ((it.abstract || '').length > 200 ? '…' : '') + '</div>' : '') +
+          '<div class="lit-meta"><span class="authors">👤 ' + esc((it.authors || []).slice(0, 4).join(', ')) + ((it.authors || []).length > 4 ? ' 等' : '') + '</span>' +
+          '<span>📖 ' + esc(it.source || '') + '</span><span>📅 ' + (it.year || '—') + '</span><span>💬 被引 ' + (it.cited || 0) + '</span>' +
+          (link ? '<a class="link" href="' + link + '" target="_blank" rel="noopener">↗ 查看全文/DOI</a>' : '') + '</div>' +
+          (doi ? '<div class="lit-doi">DOI: ' + esc(doi) + '</div>' : '') + '</div>';
+      });
+      html += '</div></div>';
+    });
+    if (!html) html = '<p class="hint">未找到匹配的已收录文献，换个关键词试试～</p>';
+    list.innerHTML = html + (total ? '<p class="hint" style="margin-top:10px">当前展示 ' + total + ' 篇（共收录 600 篇，每方向默认展示前 25 篇）</p>' : '');
+  };
+  window.colLitDirTab = function (dir, btn) {
+    colLitDir = dir;
+    document.querySelectorAll('#col-lit-tabs button').forEach(function (b) { b.classList.toggle('active', b.dataset.dir === (dir || '')); });
+    renderCollectedLit();
+  };
+
   /* ================= 初始化 ================= */
   document.addEventListener('DOMContentLoaded', function () {
     renderSuggestions();
@@ -2480,6 +2491,8 @@
       if (!t || !t.closest) return;
       var typeBtn = t.closest('#lib-type-tabs button');
       if (typeBtn) { window.libTypeTab(typeBtn.dataset.type, typeBtn); return; }
+      var colDirBtn = t.closest('#col-lit-tabs button');
+      if (colDirBtn) { window.colLitDirTab(colDirBtn.dataset.dir || null, colDirBtn); return; }
       var dirBtn = t.closest('#lib-tabs button');
       if (dirBtn) { window.libTab(dirBtn.dataset.dir || null, dirBtn); return; }
       var dataBtn = t.closest('#data-result .data-tabs button[data-tab]');
