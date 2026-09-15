@@ -1897,7 +1897,7 @@
         return !q || (b.title + '').toLowerCase().indexOf(q) >= 0;
       });
       if (!filteredTb.length) return;
-      html += '<div class="card"><h3>📖 ' + cn + '（教材 ' + filteredTb.length + ' 本）</h3>';
+      html += '<div class="card"><h3>📖 ' + cn + '</h3>';
       if (filteredTb.length) {
         html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:14px">';
         filteredTb.forEach(function (b) {
