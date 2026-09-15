@@ -482,6 +482,75 @@
     return scored.slice(0, topN);
   }
 
+
+  /* ---------------- 知识体系树（知识点在统计学知识体系中的位置） ---------------- */
+  var TREE = {
+    name: '统计学',
+    children: [
+      { name: '描述统计与数据可视化', ids: ['viz_principles', 'zscore', 'empirical_rule'] },
+      { name: '概率论与随机变量', children: [
+        { name: '随机变量与常见分布', ids: ['binom', 'poisson', 'geo_geom', 'exp_mem', 't_dist', 'normal'] },
+        { name: '极限定理', ids: ['clt', 'lln'] },
+        { name: '贝叶斯与推断范式', ids: ['bayes', 'freq_bayes'] }
+      ]},
+      { name: '统计推断', children: [
+        { name: '参数估计', ids: ['mle', 'ci'] },
+        { name: '假设检验', ids: ['pvalue', 'ht_logic', 'chi2', 'ht_logic', 'anova_doe'] }
+      ]},
+      { name: '回归分析', ids: ['lm', 'lm_assumptions', 'logistic', 'interaction', 'aic_bic', 'outlier_leverage'] },
+      { name: '试验设计与质量工程', ids: ['doe', 'factorial', 'ab_test', 'spc', 'msa'] },
+      { name: '多元统计分析', ids: ['pca', 'cluster', 'manova_da', 'mahalanobis', 'pca_vs_factor'] },
+      { name: '时间序列分析', ids: ['ts_decomp', 'arima', 'ts_corr', 'ets'] },
+      { name: '抽样调查', ids: ['sampling', 'sample_size', 'nonsampling'] },
+      { name: '统计思维与因果推断', ids: ['corr_causal', 'obs_vs_exp'] }
+    ]
+  };
+
+  /** 根据条目 id 查找其在知识体系中的位置（路径数组） */
+  function positionOf(id) {
+    function walk(node, path) {
+      if (node.ids && node.ids.indexOf(id) >= 0) return path.concat([node.name]);
+      if (node.children) {
+        for (var i = 0; i < node.children.length; i++) {
+          var r = walk(node.children[i], path.concat([node.name]));
+          if (r) return r;
+        }
+      }
+      return null;
+    }
+    var p = walk(TREE, []);
+    return p ? p.slice(1) : null; // 去掉根节点"统计学"
+  }
+
+  /** 根据问题检索知识位置（兼容知识点/易混淆概念/高频问答） */
+  function positionOfQuery(query) {
+    var hits = search(query, 5);
+    if (!hits.length) return null;
+    // 优先：命中条目本身是知识点（entry）
+    for (var i = 0; i < hits.length; i++) {
+      if (hits[i].type === 'entry') {
+        for (var k = 0; k < ENTRIES.length; k++) {
+          if (ENTRIES[k].title === hits[i].title) {
+            var p = positionOf(ENTRIES[k].id);
+            if (p) return { path: p, title: hits[i].title };
+          }
+        }
+      }
+    }
+    // 兜底：从易混淆/问答文本中匹配关联知识点
+    for (var j = 0; j < hits.length; j++) {
+      var text = (hits[j].title || '') + ' ' + (hits[j].content || '');
+      for (var m = 0; m < ENTRIES.length; m++) {
+        if (text.indexOf(ENTRIES[m].title) >= 0) {
+          var p2 = positionOf(ENTRIES[m].id);
+          if (p2) return { path: p2, title: hits[j].title };
+        }
+      }
+    }
+    return null;
+  }
+
+
   /* 建议问题（聊天起始） */
   var SUGGESTIONS = [
     '用生活例子讲讲什么是置信区间',
@@ -500,6 +569,9 @@
     qa: QA,
     frontier: FRONTIER,
     search: search,
+    positionOf: positionOf,
+    positionOfQuery: positionOfQuery,
+    tree: TREE,
     suggestions: SUGGESTIONS
   };
 })(window);
