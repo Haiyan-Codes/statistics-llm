@@ -714,15 +714,13 @@ table.grid td.cat{color:var(--primary-2)}
   <div class="section-title">📚 教学资源库</div>
   <div class="gold-bar"></div>
   <div class="card">
-    <div class="stat-cards" id="lib-stats" style="grid-template-columns:repeat(6,1fr)">
+    <div class="stat-cards" id="lib-stats" style="grid-template-columns:repeat(4,1fr)">
       <div class="stat-card"><b id="lib-tb-count">0</b><span>开放教材</span></div>
-      <div class="stat-card"><b id="lib-lit-count">0</b><span>开放文献</span></div>
       <div class="stat-card"><b id="lib-ds-count">0</b><span>数据源网站</span></div>
       <div class="stat-card"><b>6+</b><span>课程方向</span></div>
-      <div class="stat-card"><b id="lib-oa-count">0</b><span>已存 OA 全文</span></div>
-      <div class="stat-card"><b>4</b><span>更多资源类型</span></div>
+      <div class="stat-card"><b>4</b><span>待收录类型</span></div>
     </div>
-    <p class="hint" style="margin-top:10px">资源类型：<b>教材 / 讲义 / 文献 / 课件PPT / 视频 / 题库 / 公开数据集</b>（数据源网站）——对应申报数据集建设中"教材、PPT、视频、题目、讲义、公开统计数据"的收录范围；暂缺分类标注「⏳ 陆续添加中」。</p>
+    <p class="hint" style="margin-top:10px">资源类型：<b>教材 / 讲义 / 课件PPT / 视频 / 题库 / 公开数据集</b>（数据源网站）；已收录 <b>600 篇文献</b>移至「文献收录与检索」页。暂缺分类标注「⏳ 陆续添加中」。</p>
   </div>
   <div class="card" style="padding:14px 18px">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -740,7 +738,6 @@ table.grid td.cat{color:var(--primary-2)}
     <button class="active" data-type="all" onclick="libTypeTab('all',this)">全部</button>
     <button data-type="textbook" onclick="libTypeTab('textbook',this)">📘 教材</button>
     <button data-type="notes" onclick="libTypeTab('notes',this)">🗂️ 讲义</button>
-    <button data-type="literature" onclick="libTypeTab('literature',this)">📄 文献</button>
     <button data-type="ppt" onclick="libTypeTab('ppt',this)">📊 课件PPT</button>
     <button data-type="video" onclick="libTypeTab('video',this)">🎬 视频</button>
     <button data-type="quiz" onclick="libTypeTab('quiz',this)">📝 题库</button>
@@ -752,7 +749,7 @@ table.grid td.cat{color:var(--primary-2)}
 
 <!-- ==================== 文献检索 ==================== -->
 <section id="page-litsearch" class="page">
-  <div class="section-title">🔍 文献检索</div>
+  <div class="section-title">🔍 文献收录与检索</div>
   <div class="gold-bar"></div>
   <div class="card">
     <h3>多源学术检索</h3>
@@ -763,6 +760,21 @@ table.grid td.cat{color:var(--primary-2)}
     <p class="hint" style="margin-top:8px">聚合 OpenAlex / Crossref / arXiv（stat）三源，优先开放获取（OA）文献，带摘要、DOI、引用数与全文链接。</p>
   </div>
   <div id="lit-result"><p class="hint">输入关键词开始检索～</p></div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>📚 已收录经典文献（600 篇）</h3>
+    <p class="hint" style="margin:6px 0 12px">六大课程方向开放获取文献，支持按方向筛选、关键词搜索、年份/被引排序与收藏；OA 全文可直达原文。</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input id="col-lit-search" type="text" placeholder="🔍 在已收录文献中搜索…" style="flex:1;min-width:220px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;outline:none" oninput="renderCollectedLit()">
+      <select id="col-lit-sort" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px" onchange="renderCollectedLit()">
+        <option value="default">默认排序</option>
+        <option value="year">按年份 ↓</option>
+        <option value="cited">按被引 ↓</option>
+      </select>
+    </div>
+    <div class="data-tabs" id="col-lit-tabs"></div>
+    <div id="col-lit-list"></div>
+  </div>
 </section>
 
 <!-- ==================== 知识蒸馏 ==================== -->
