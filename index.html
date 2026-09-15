@@ -714,13 +714,15 @@ table.grid td.cat{color:var(--primary-2)}
   <div class="section-title">📚 教学资源库</div>
   <div class="gold-bar"></div>
   <div class="card">
-    <div class="stat-cards" id="lib-stats" style="grid-template-columns:repeat(4,1fr)">
-      <div class="stat-card"><b id="lib-tb-count">0</b><span>开放教材/讲义</span></div>
-      <div class="stat-card"><b id="lib-lit-count">0</b><span>开放获取文献</span></div>
-      <div class="stat-card"><b>6+</b><span>课程方向持续扩展</span></div>
-      <div class="stat-card"><b id="lib-oa-count">0</b><span>已下载 OA 全文</span></div>
+    <div class="stat-cards" id="lib-stats" style="grid-template-columns:repeat(6,1fr)">
+      <div class="stat-card"><b id="lib-tb-count">0</b><span>开放教材</span></div>
+      <div class="stat-card"><b id="lib-lit-count">0</b><span>开放文献</span></div>
+      <div class="stat-card"><b id="lib-ds-count">0</b><span>数据源网站</span></div>
+      <div class="stat-card"><b>6+</b><span>课程方向</span></div>
+      <div class="stat-card"><b id="lib-oa-count">0</b><span>已存 OA 全文</span></div>
+      <div class="stat-card"><b>4</b><span>更多资源类型</span></div>
     </div>
-    <p class="hint" style="margin-top:10px">资源均来自开放授权来源（OpenIntro CC、NIST 公共领域、arXiv/OpenAlex OA、OTexts 等），版权合规，可自由用于教学。教材与文献全文已存档至课程组资料硬盘，本站提供分类浏览与下载。</p>
+    <p class="hint" style="margin-top:10px">资源类型：<b>教材 / 讲义 / 文献 / 课件PPT / 视频 / 题库 / 公开数据集</b>（数据源网站）——对应申报数据集建设中"教材、PPT、视频、题目、讲义、公开统计数据"的收录范围；暂缺分类标注「⏳ 陆续添加中」。</p>
   </div>
   <div class="card" style="padding:14px 18px">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -733,6 +735,16 @@ table.grid td.cat{color:var(--primary-2)}
       <button class="btn btn-ghost btn-sm" id="lib-fav-btn" onclick="toggleFavFilter()">⭐ 只看收藏</button>
       <span class="hint" id="lib-filter-info"></span>
     </div>
+  </div>
+  <div class="data-tabs" id="lib-type-tabs" style="margin-bottom:12px">
+    <button class="active" data-type="all" onclick="libTypeTab('all',this)">全部</button>
+    <button data-type="textbook" onclick="libTypeTab('textbook',this)">📘 教材</button>
+    <button data-type="notes" onclick="libTypeTab('notes',this)">🗂️ 讲义</button>
+    <button data-type="literature" onclick="libTypeTab('literature',this)">📄 文献</button>
+    <button data-type="ppt" onclick="libTypeTab('ppt',this)">📊 课件PPT</button>
+    <button data-type="video" onclick="libTypeTab('video',this)">🎬 视频</button>
+    <button data-type="quiz" onclick="libTypeTab('quiz',this)">📝 题库</button>
+    <button data-type="dataset" onclick="libTypeTab('dataset',this)">📈 公开数据</button>
   </div>
   <div class="data-tabs" id="lib-tabs"></div>
   <div id="lib-content"></div>
