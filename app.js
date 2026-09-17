@@ -486,8 +486,10 @@
     switchDataTab('overview');
     renderOverview();
     renderQuality();
-    // 自动分析但不抢切 tab（保持数据概览可见）
-    runAutoAnalyze(true);
+    // 教学交互：不自动分析，显示确认引导条，由学生确认后开始
+    window._analyzed = false;
+    var cf = $('analyze-confirm');
+    if (cf) { cf.style.display = 'flex'; }
   }
 
   window.switchDataTab = function (tab) {
@@ -496,6 +498,17 @@
     });
     document.querySelectorAll('.tab-pane').forEach(function (p) { p.style.display = 'none'; });
     $('tab-' + tab).style.display = 'block';
+    // 教学交互：尚未分析时，结果类 tab 显示引导提示
+    if (!window._analyzed && ['describe', 'inference', 'charts', 'report'].indexOf(tab) >= 0) {
+      var pane = $('tab-' + tab);
+      if (pane && !pane.querySelector('.analyze-hint')) {
+        var hint = document.createElement('div');
+        hint.className = 'analyze-hint';
+        hint.style.cssText = 'background:var(--accent-soft);border-radius:10px;padding:16px 18px;font-size:13.5px;color:var(--ink2);line-height:1.9';
+        hint.innerHTML = '📝 <b>教学引导：</b>请先回到「数据概览」检查数据，确认无误后点击上方「✅ 确认数据，开始分析」按钮，系统将为你自动完成统计检验、建模与可视化。';
+        pane.insertBefore(hint, pane.firstChild);
+      }
+    }
     if (tab === 'charts' && currentData) renderCharts();
     if (tab === 'inference' && currentData) renderInference();
     if (tab === 'describe' && currentData) renderDescribeTable();
@@ -824,11 +837,19 @@
     URL.revokeObjectURL(a.href);
   };
 
+  /* 教学交互确认：学生确认数据后开始分析 */
+  window.confirmAnalyze = function () {
+    var cf = $('analyze-confirm');
+    if (cf) cf.style.display = 'none';
+    runAutoAnalyze();
+  };
+
   window.runAutoAnalyze = function (keepTab) {
     if (!currentData) { alert('请先上传数据或加载示例数据'); return; }
     var btn = event && event.target;
     if (btn) { btn.textContent = '⏳ 分析中…'; btn.disabled = true; }
     setTimeout(function () {
+      window._analyzed = true;
       renderDescribeTable();
       renderInference();
       renderCharts();
