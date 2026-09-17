@@ -505,17 +505,28 @@
     });
     document.querySelectorAll('.tab-pane').forEach(function (p) { p.style.display = 'none'; });
     $('tab-' + tab).style.display = 'block';
-    // 教学交互：分步锁定（后续步骤需先完成前一步）
+    // 教学交互：分步锁定（未解锁的步骤隐藏内容、只显示锁定提示；保留容器结构）
     var needStep = { describe: 1, inference: 2, charts: 3, report: 4 }[tab];
+    var pane2 = $('tab-' + tab);
+    // 先移除旧锁定提示
+    if (pane2) {
+      var oldHint = pane2.querySelector('.analyze-hint');
+      if (oldHint) oldHint.remove();
+    }
     if (needStep && (window._step || 0) < needStep) {
-      var pane2 = $('tab-' + tab);
-      if (pane2 && !pane2.querySelector('.analyze-hint')) {
+      if (pane2) {
+        Array.prototype.forEach.call(pane2.children, function (ch) { ch.style.display = 'none'; });
         var hint2 = document.createElement('div');
         hint2.className = 'analyze-hint';
         hint2.style.cssText = 'background:var(--accent-soft);border-radius:10px;padding:16px 18px;font-size:13.5px;color:var(--ink2);line-height:1.9';
-        hint2.innerHTML = '🔒 <b>教学分步模式：</b>请先完成上一步骤，再查看「' + ({ describe: '描述统计', inference: '推断检验', charts: '可视化', report: '分析报告' }[tab]) + '」。<br><span class="hint">当前进度：已完成 ' + Math.max(0, window._step || 0) + ' / 4 步，点击上方「✅ 确认数据」按钮按顺序解锁。</span>';
-        pane2.insertBefore(hint2, pane2.firstChild);
+        hint2.innerHTML = '🔒 <b>教学分步模式：</b>该步骤尚未解锁，请先完成上一步骤后再查看「' + ({ describe: '描述统计', inference: '推断检验', charts: '可视化', report: '分析报告' }[tab]) + '」。<br><span class="hint">当前进度：已完成 ' + Math.max(0, window._step || 0) + ' / 4 步，点击上方按钮按顺序解锁。</span>';
+        pane2.appendChild(hint2);
       }
+      return; // 未解锁：不渲染内容
+    }
+    // 已解锁：恢复内容显示
+    if (pane2) {
+      Array.prototype.forEach.call(pane2.children, function (ch) { ch.style.display = ''; });
     }
     if (tab === 'charts' && currentData) renderCharts();
     if (tab === 'inference' && currentData) renderInference();
