@@ -489,10 +489,14 @@
     // 教学交互：不自动分析，显示确认引导条，由学生确认后开始
     window._analyzed = false;
     window._stuThought = '';
+    window._stuThoughtSaved = false;
+    window._step = 0;
     var th = $('stu-thought'); if (th) th.value = '';
     var note = $('stu-note'); if (note) { note.style.display = 'none'; note.innerHTML = ''; }
     var cf = $('analyze-confirm');
     if (cf) { cf.style.display = 'flex'; }
+    var sb = $('step-btn');
+    if (sb) { sb.textContent = '▶ 第 1 步：描述统计'; sb.disabled = false; }
   }
 
   window.switchDataTab = function (tab) {
@@ -501,15 +505,16 @@
     });
     document.querySelectorAll('.tab-pane').forEach(function (p) { p.style.display = 'none'; });
     $('tab-' + tab).style.display = 'block';
-    // 教学交互：尚未分析时，结果类 tab 显示引导提示
-    if (!window._analyzed && ['describe', 'inference', 'charts', 'report'].indexOf(tab) >= 0) {
-      var pane = $('tab-' + tab);
-      if (pane && !pane.querySelector('.analyze-hint')) {
-        var hint = document.createElement('div');
-        hint.className = 'analyze-hint';
-        hint.style.cssText = 'background:var(--accent-soft);border-radius:10px;padding:16px 18px;font-size:13.5px;color:var(--ink2);line-height:1.9';
-        hint.innerHTML = '📝 <b>教学引导：</b>请先回到「数据概览」检查数据，确认无误后点击上方「✅ 确认数据，开始分析」按钮，系统将为你自动完成统计检验、建模与可视化。';
-        pane.insertBefore(hint, pane.firstChild);
+    // 教学交互：分步锁定（后续步骤需先完成前一步）
+    var needStep = { describe: 1, inference: 2, charts: 3, report: 4 }[tab];
+    if (needStep && (window._step || 0) < needStep) {
+      var pane2 = $('tab-' + tab);
+      if (pane2 && !pane2.querySelector('.analyze-hint')) {
+        var hint2 = document.createElement('div');
+        hint2.className = 'analyze-hint';
+        hint2.style.cssText = 'background:var(--accent-soft);border-radius:10px;padding:16px 18px;font-size:13.5px;color:var(--ink2);line-height:1.9';
+        hint2.innerHTML = '🔒 <b>教学分步模式：</b>请先完成上一步骤，再查看「' + ({ describe: '描述统计', inference: '推断检验', charts: '可视化', report: '分析报告' }[tab]) + '」。<br><span class="hint">当前进度：已完成 ' + Math.max(0, window._step || 0) + ' / 4 步，点击上方「✅ 确认数据」按钮按顺序解锁。</span>';
+        pane2.insertBefore(hint2, pane2.firstChild);
       }
     }
     if (tab === 'charts' && currentData) renderCharts();
@@ -856,14 +861,42 @@
     URL.revokeObjectURL(a.href);
   };
 
-  /* 教学交互确认：学生确认数据后开始分析 */
+  /* 教学交互：分步分析向导（每步确认后展示下一步结果） */
+  var STEP_NAMES = ['描述统计', '推断检验', '可视化', '分析报告'];
+  function stepBtnHtml() {
+    var cur = Math.min(window._step || 0, STEP_NAMES.length);
+    if (cur >= STEP_NAMES.length) return '🎉 全部完成';
+    return '✅ 第 ' + cur + ' 步完成 → 第 ' + (cur + 1) + ' 步：' + STEP_NAMES[cur];
+  }
   window.confirmAnalyze = function () {
-    var cf = $('analyze-confirm');
-    if (cf) cf.style.display = 'none';
-    // 记录学生的初步判断（可选）
-    var th = $('stu-thought');
-    window._stuThought = (th && th.value.trim()) ? th.value.trim() : '';
-    runAutoAnalyze();
+    // 记录学生的初步判断（第一步时读取，仅一次）
+    if (!window._stuThoughtSaved) {
+      var th = $('stu-thought');
+      window._stuThought = (th && th.value.trim()) ? th.value.trim() : '';
+      window._stuThoughtSaved = true;
+    }
+    window._step = (window._step || 0) + 1;
+    window._analyzed = true;
+    if (window._step === 1) {
+      renderDescribeTable();
+      switchDataTab('describe');
+    } else if (window._step === 2) {
+      renderInference();
+      switchDataTab('inference');
+    } else if (window._step === 3) {
+      renderCharts();
+      switchDataTab('charts');
+    } else if (window._step >= 4) {
+      renderReport();
+      switchDataTab('report');
+      var cf = $('analyze-confirm');
+      if (cf) cf.style.display = 'none';
+    }
+    var btn = $('step-btn');
+    if (btn) {
+      btn.textContent = stepBtnHtml();
+      if (window._step >= STEP_NAMES.length) btn.disabled = true;
+    }
   };
 
   window.runAutoAnalyze = function (keepTab) {
@@ -872,10 +905,14 @@
     if (btn) { btn.textContent = '⏳ 分析中…'; btn.disabled = true; }
     setTimeout(function () {
       window._analyzed = true;
+      window._step = 4;
       renderDescribeTable();
       renderInference();
       renderCharts();
       renderReport();
+      var sb2 = $('step-btn');
+      if (sb2) { sb2.textContent = '🎉 全部完成'; sb2.disabled = true; }
+      var cf2 = $('analyze-confirm'); if (cf2) cf2.style.display = 'none';
       if (btn) { btn.textContent = '▶ 一键全量分析'; btn.disabled = false; }
       // keepTab=true（示例数据自动分析）时不切换 tab，保持当前视图
       if (!keepTab) switchDataTab('report');
