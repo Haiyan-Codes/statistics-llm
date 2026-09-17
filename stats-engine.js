@@ -1229,11 +1229,42 @@
     var numericCols = types.filter(function (t) { return t.type === 'numeric'; }).map(function (t) { return t.name; });
     var catCols = types.filter(function (t) { return t.type === 'categorical'; }).map(function (t) { return t.name; });
     var n = rows.length;
+    var notes = []; // 分析设置/调整说明
+
+    // ---- 分析选项：排除异常值（IQR 法，按行剔除） ----
+    if (opts.excludeOutliers && numericCols.length) {
+      var keep = rows.filter(function (r) {
+        for (var i = 0; i < numericCols.length; i++) {
+          var v = r[numericCols[i]];
+          if (v == null || isNaN(v)) continue;
+          var colVals = rows.map(function (x) { return x[numericCols[i]]; }).filter(function (x) { return x != null && !isNaN(x); });
+          var q1 = quantile(colVals, 0.25), q3 = quantile(colVals, 0.75);
+          var iq = q3 - q1;
+          if (v < q1 - 1.5 * iq || v > q3 + 1.5 * iq) return false;
+        }
+        return true;
+      });
+      var removed = rows.length - keep.length;
+      rows = keep;
+      n = rows.length;
+      notes.push('已按 IQR 法则（1.5×四分位距）剔除 **' + removed + '** 个含异常值的样本后重新分析');
+    }
+
+    // ---- 分析选项：指定因变量（回归/主分析） ----
+    if (opts.yVar && numericCols.indexOf(opts.yVar) >= 0 && opts.yVar !== numericCols[0]) {
+      notes.push('按你的反馈，以「**' + opts.yVar + '**」为因变量重新构建回归模型');
+    }
 
     report.push('# 数据分析报告');
     report.push('');
     report.push('> 由「统计学学科大模型 · 数据分析教学智能体」自动生成 | ' + new Date().toLocaleString('zh-CN'));
     report.push('');
+    if (notes.length) {
+      report.push('## 0. 本次分析调整说明（基于学生反馈）');
+      report.push('');
+      notes.forEach(function (t) { report.push('- ✅ ' + t); });
+      report.push('');
+    }
     report.push('## 1. 数据概览');
     report.push('');
     report.push('- 样本量：**' + n + '** 行，字段数：**' + headers.length + '**');
@@ -1371,7 +1402,7 @@
 
     /* 线性回归（以第一个数值变量为因变量） */
     if (numericCols.length >= 2 && n >= 8) {
-      var yName = numericCols[0];
+      var yName = (opts.yVar && numericCols.indexOf(opts.yVar) >= 0) ? opts.yVar : numericCols[0];
       var xNames = numericCols.slice(1, Math.min(5, numericCols.length));
       var X = [], y = [];
       rows.forEach(function (r) {
