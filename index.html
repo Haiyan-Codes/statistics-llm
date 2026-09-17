@@ -652,6 +652,14 @@ table.grid td.cat{color:var(--primary-2)}
   </div>
 
   <div id="data-result" style="display:none">
+    <!-- 交互确认引导条：学生确认数据后才开始分析 -->
+    <div id="analyze-confirm" style="display:none;background:var(--accent-soft);border:1.5px dashed var(--accent);border-radius:12px;padding:14px 18px;margin-bottom:14px;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:230px">
+        <b style="color:var(--primary);font-size:14.5px">📊 数据已就绪！</b>
+        <span class="hint" style="margin-left:8px">请先在「数据概览」中检查数据是否无误，确认后点击按钮开始智能分析。</span>
+      </div>
+      <button class="btn btn-gold" onclick="confirmAnalyze()">✅ 确认数据，开始分析</button>
+    </div>
     <div class="data-tabs">
       <button class="active" data-tab="overview" onclick="switchDataTab('overview')">数据概览</button>
       <button data-tab="quality" onclick="switchDataTab('quality')">数据质量</button>
