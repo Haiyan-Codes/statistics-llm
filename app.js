@@ -490,6 +490,7 @@
     window._analyzed = false;
     window._stuThought = '';
     window._stuThoughtSaved = false;
+    window._analyzeOpts = {};
     window._step = 0;
     var th = $('stu-thought'); if (th) th.value = '';
     var note = $('stu-note'); if (note) { note.style.display = 'none'; note.innerHTML = ''; }
@@ -695,7 +696,9 @@
 
     // 回归
     if (nums.length >= 2 && d.rows.length >= 8) {
-      var yName = nums[0], xNames = nums.slice(1, Math.min(5, nums.length));
+      var ao = window._analyzeOpts || {};
+      var yName = (ao.yVar && nums.indexOf(ao.yVar) >= 0) ? ao.yVar : nums[0];
+      var xNames = nums.filter(function (c) { return c !== yName; }).slice(0, Math.min(5, nums.length) - (yName !== nums[0] ? 1 : 0));
       var X = [], y = [];
       d.rows.forEach(function (r) {
         if (r[yName] == null || isNaN(r[yName])) return;
@@ -838,7 +841,7 @@
   var lastReport = '';
   function renderReport() {
     var d = currentData;
-    var analysis = S.autoAnalyze(d.rows, d.headers, d.types);
+    var analysis = S.autoAnalyze(d.rows, d.headers, d.types, window._analyzeOpts || {});
     lastReport = analysis.markdown;
     $('report-box').innerHTML = mdToHtml(analysis.markdown);
     // 学生初步判断 vs 分析结论对比
@@ -928,6 +931,63 @@
       // keepTab=true（示例数据自动分析）时不切换 tab，保持当前视图
       if (!keepTab) switchDataTab('report');
     }, 80);
+  };
+
+
+  /* ---- 反馈与重新分析（学生提出调整意见）---- */
+  var fbOpts = {};
+  window.toggleFeedback = function () {
+    var p = $('feedback-panel');
+    if (!p) return;
+    var show = p.style.display !== 'block';
+    p.style.display = show ? 'block' : 'none';
+    if (show) {
+      // 填充因变量下拉（数值列）
+      var sel = $('fb-yvar');
+      if (sel && currentData) {
+        var nums = (currentData.types || []).filter(function (t) { return t.type === 'numeric'; });
+        sel.innerHTML = nums.map(function (t) { return '<option value="' + esc(t.name) + '">' + esc(t.name) + '</option>'; }).join('');
+      }
+    }
+  };
+  window.toggleFbOpt = function (key, btn) {
+    fbOpts[key] = !fbOpts[key];
+    if (btn) {
+      btn.classList.toggle('btn-gold', !!fbOpts[key]);
+      btn.classList.toggle('ex-chip', !fbOpts[key]);
+    }
+    var row = $('fb-yvar-row');
+    if (row) row.style.display = fbOpts.yvar ? 'block' : 'none';
+  };
+  window.submitFeedback = function () {
+    if (!currentData) { alert('请先加载数据'); return; }
+    var fbText = ($('fb-text') ? $('fb-text').value : '').trim();
+    var opts = { excludeOutliers: !!fbOpts.outliers };
+    if (fbOpts.yvar && $('fb-yvar')) opts.yVar = $('fb-yvar').value;
+    var status = $('fb-status');
+    if (status) status.textContent = '⏳ 正在根据你的反馈重新分析…';
+    setTimeout(function () {
+      // 用调整选项重跑分析（更新各视图与报告）
+      window._analyzeOpts = opts;
+      window._step = 4;
+      window._analyzed = true;
+      renderDescribeTable();
+      renderInference();
+      renderCharts();
+      renderReport();
+      switchDataTab('report');
+      if (status) {
+        var parts = [];
+        if (opts.excludeOutliers) parts.push('排除异常值');
+        if (opts.yVar) parts.push('因变量改为「' + opts.yVar + '」');
+        if (fbText) parts.push('反馈：' + fbText);
+        status.innerHTML = '✅ 已根据你的反馈重新分析' + (parts.length ? '（' + esc(parts.join('；')) + '）' : '') + '，请在报告中查看「本次分析调整说明」。';
+      }
+      var fbTxt = $('fb-text'); if (fbTxt) fbTxt.value = '';
+      fbOpts = {};
+      document.querySelectorAll('#feedback-panel .ex-chip').forEach(function (b) { b.classList.remove('btn-gold'); });
+      var row = $('fb-yvar-row'); if (row) row.style.display = 'none';
+    }, 120);
   };
 
   /* ---- 功效分析计算器 ---- */
