@@ -719,6 +719,26 @@ table.grid td.cat{color:var(--primary-2)}
           <button class="btn btn-soft btn-sm" onclick="downloadReport()">下载 .md</button>
         </div>
         <div id="stu-note" style="display:none"></div>
+        <div style="margin-bottom:12px">
+          <button class="btn btn-ghost btn-sm" onclick="toggleFeedback()">🔄 分析有疑问？反馈并重新分析</button>
+        </div>
+        <div id="feedback-panel" style="display:none;background:var(--bg-soft);border:1.5px solid var(--primary-2);border-radius:12px;padding:14px 16px;margin-bottom:12px">
+          <b style="color:var(--primary)">✍️ 向智能体反馈你的想法（可多选或自由描述）</b>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+            <button class="ex-chip" onclick="toggleFbOpt('outliers',this)">📤 排除异常值</button>
+            <button class="ex-chip" onclick="toggleFbOpt('yvar',this)">🎯 更换因变量</button>
+            <button class="ex-chip" onclick="toggleFbOpt('nonparam',this)">🛡️ 优先非参数方法</button>
+          </div>
+          <div id="fb-yvar-row" style="display:none;margin-top:8px">
+            <span class="hint">选择因变量：</span>
+            <select id="fb-yvar" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px"></select>
+          </div>
+          <textarea id="fb-text" rows="2" placeholder="自由描述：例如「我怀疑异常值影响了结论，请排除后重试」「请重点看性别分组的差异」……" style="width:100%;margin-top:10px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;outline:none"></textarea>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary btn-sm" onclick="submitFeedback()">✅ 按反馈重新分析</button>
+            <span class="hint" id="fb-status"></span>
+          </div>
+        </div>
         <div class="report-box" id="report-box"></div>
       </div>
     </div>
