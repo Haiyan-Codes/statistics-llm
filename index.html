@@ -659,6 +659,13 @@ table.grid td.cat{color:var(--primary-2)}
         <span class="hint" style="margin-left:8px">请先在「数据概览」中检查数据是否无误，确认后点击按钮开始智能分析。</span>
       </div>
       <button class="btn btn-gold" onclick="confirmAnalyze()">✅ 确认数据，开始分析</button>
+      <div style="flex-basis:100%">
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+          <span style="font-size:13px;color:var(--ink2)">✍️ <b>写下你的初步判断（可选）</b></span>
+          <span class="hint">先预测一下结果，分析完成后可以对照验证你的猜想～</span>
+        </div>
+        <textarea id="stu-thought" rows="2" placeholder="例如：我预计学习时长与期末成绩呈正相关；或：我猜两种方法的平均分差异不大……" style="width:100%;margin-top:6px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;resize:vertical;outline:none"></textarea>
+      </div>
     </div>
     <div class="data-tabs">
       <button class="active" data-tab="overview" onclick="switchDataTab('overview')">数据概览</button>
@@ -711,6 +718,7 @@ table.grid td.cat{color:var(--primary-2)}
           <button class="btn btn-soft btn-sm" onclick="copyReport()">复制报告</button>
           <button class="btn btn-soft btn-sm" onclick="downloadReport()">下载 .md</button>
         </div>
+        <div id="stu-note" style="display:none"></div>
         <div class="report-box" id="report-box"></div>
       </div>
     </div>
