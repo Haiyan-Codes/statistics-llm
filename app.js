@@ -488,6 +488,9 @@
     renderQuality();
     // 教学交互：不自动分析，显示确认引导条，由学生确认后开始
     window._analyzed = false;
+    window._stuThought = '';
+    var th = $('stu-thought'); if (th) th.value = '';
+    var note = $('stu-note'); if (note) { note.style.display = 'none'; note.innerHTML = ''; }
     var cf = $('analyze-confirm');
     if (cf) { cf.style.display = 'flex'; }
   }
@@ -822,6 +825,22 @@
     var analysis = S.autoAnalyze(d.rows, d.headers, d.types);
     lastReport = analysis.markdown;
     $('report-box').innerHTML = mdToHtml(analysis.markdown);
+    // 学生初步判断 vs 分析结论对比
+    var note = $('stu-note');
+    if (note) {
+      var thought = window._stuThought || '';
+      if (thought) {
+        note.style.display = 'block';
+        note.innerHTML = '<div style="background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px">' +
+          '<b style="color:var(--primary)">🧑\u200d🎓 你的初步判断</b>' +
+          '<div style="font-size:13.5px;color:var(--ink2);line-height:1.8;margin-top:6px">' + esc(thought) + '</div>' +
+          '<div class="hint" style="margin-top:8px">💡 教学提示：请对照上方分析结果，验证你的猜想是否得到数据支持——注意区分"相关与因果""显著与重要"，这正是统计思维的训练。</div>' +
+          '</div>';
+      } else {
+        note.style.display = 'none';
+        note.innerHTML = '';
+      }
+    }
   }
   window.copyReport = function () {
     if (!lastReport) return;
@@ -841,6 +860,9 @@
   window.confirmAnalyze = function () {
     var cf = $('analyze-confirm');
     if (cf) cf.style.display = 'none';
+    // 记录学生的初步判断（可选）
+    var th = $('stu-thought');
+    window._stuThought = (th && th.value.trim()) ? th.value.trim() : '';
     runAutoAnalyze();
   };
 
